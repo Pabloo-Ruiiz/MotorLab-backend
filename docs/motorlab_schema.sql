@@ -4,10 +4,10 @@
 --  Autor: Pablo Ruiz Gandia · 2.º DAW
 --
 --  La base de datos debe existir ya (se crea fuera del script):
---      CREATE DATABASE motorlab OWNER motorlab_app ENCODING 'UTF8' TEMPLATE template0;
+--      CREATE DATABASE motorlabdb OWNER motorlab_usr ENCODING 'UTF8' TEMPLATE template0;
 --
 --  Cómo ejecutarlo desde Git Bash, en la raíz del repositorio:
---      winpty psql -U motorlab_app -d motorlab -f docs/motorlab_schema.sql
+--      winpty psql -U motorlab_usr -d motorlabdb -f docs/motorlab_schema.sql
 --
 --  El script es atómico: si algo falla, no se guarda nada (BEGIN ... COMMIT).
 --  Puedes volver a ejecutarlo: borra y recrea las tablas.
