@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.motorlab.dto.common.PageResponse;
+import com.motorlab.dto.orden.OrdenResumenResponse;
 import com.motorlab.dto.vehiculo.VehiculoRequest;
 import com.motorlab.dto.vehiculo.VehiculoResponse;
 import com.motorlab.service.VehiculoService;
@@ -54,6 +55,15 @@ public class VehiculoController {
     @Operation(summary = "Obtener un vehículo")
     public VehiculoResponse obtener(@PathVariable Integer id) {
         return vehiculoService.obtener(id);
+    }
+
+    @GetMapping("/{id}/historial")
+    @Operation(summary = "Consultar el historial de un vehículo")
+    public PageResponse<OrdenResumenResponse> historial(
+            @PathVariable Integer id,
+            @RequestParam(required = false) Integer pagina,
+            @RequestParam(required = false) Integer limite) {
+        return vehiculoService.historial(id, pagina, limite);
     }
 
     @PutMapping("/{id}")
