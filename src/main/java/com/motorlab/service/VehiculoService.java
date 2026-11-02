@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.motorlab.dto.common.PageResponse;
+import com.motorlab.dto.orden.OrdenResumenResponse;
 import com.motorlab.dto.vehiculo.VehiculoRequest;
 import com.motorlab.dto.vehiculo.VehiculoResponse;
 import com.motorlab.entity.Usuario;
@@ -19,7 +20,11 @@ import com.motorlab.exception.MatriculaDuplicadaException;
 import com.motorlab.exception.RecursoNoEncontradoException;
 import com.motorlab.exception.SolicitudInvalidaException;
 import com.motorlab.mapper.VehiculoMapper;
+import com.motorlab.mapper.OrdenMapper;
+import com.motorlab.entity.OrdenResumen;
 import com.motorlab.repository.OrdenTrabajoRepository;
+import com.motorlab.repository.OrdenResumenRepository;
+import com.motorlab.repository.OrdenResumenSpecifications;
 import com.motorlab.repository.UsuarioRepository;
 import com.motorlab.repository.VehiculoRepository;
 import com.motorlab.security.SecurityUtils;
@@ -36,17 +41,23 @@ public class VehiculoService {
     private final VehiculoRepository vehiculoRepository;
     private final UsuarioRepository usuarioRepository;
     private final OrdenTrabajoRepository ordenTrabajoRepository;
+    private final OrdenResumenRepository ordenResumenRepository;
     private final VehiculoMapper vehiculoMapper;
+    private final OrdenMapper ordenMapper;
 
     public VehiculoService(
             VehiculoRepository vehiculoRepository,
             UsuarioRepository usuarioRepository,
             OrdenTrabajoRepository ordenTrabajoRepository,
-            VehiculoMapper vehiculoMapper) {
+            OrdenResumenRepository ordenResumenRepository,
+            VehiculoMapper vehiculoMapper,
+            OrdenMapper ordenMapper) {
         this.vehiculoRepository = vehiculoRepository;
         this.usuarioRepository = usuarioRepository;
         this.ordenTrabajoRepository = ordenTrabajoRepository;
+        this.ordenResumenRepository = ordenResumenRepository;
         this.vehiculoMapper = vehiculoMapper;
+        this.ordenMapper = ordenMapper;
     }
 
     @Transactional(readOnly = true)
@@ -76,6 +87,15 @@ public class VehiculoService {
     @Transactional(readOnly = true)
     public VehiculoResponse obtener(Integer id) {
         return vehiculoMapper.aResponse(obtenerVisible(id));
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<OrdenResumenResponse> historial(Integer id, Integer pagina, Integer limite) {
+        obtenerVisible(id);
+        Pageable pageable = PageResponse.pageable(pagina, limite);
+        Page<OrdenResumen> ordenes = ordenResumenRepository.findAll(
+                OrdenResumenSpecifications.delVehiculo(id), pageable);
+        return PageResponse.de(ordenes.map(ordenMapper::aResumenResponse));
     }
 
     @Transactional
