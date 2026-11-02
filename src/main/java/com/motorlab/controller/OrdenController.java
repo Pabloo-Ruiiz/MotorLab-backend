@@ -1,0 +1,65 @@
+package com.motorlab.controller;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.motorlab.dto.common.PageResponse;
+import com.motorlab.dto.orden.OrdenCreateRequest;
+import com.motorlab.dto.orden.OrdenCreateResponse;
+import com.motorlab.dto.orden.OrdenDetalleResponse;
+import com.motorlab.dto.orden.OrdenResumenResponse;
+import com.motorlab.entity.enums.EstadoOrden;
+import com.motorlab.entity.enums.Urgencia;
+import com.motorlab.service.OrdenService;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+
+@RestController
+@Validated
+@PreAuthorize("hasAnyRole('CLIENTE','MECANICO','ADMIN')")
+@RequestMapping("/api/v1/ordenes")
+@Tag(name = "Órdenes de trabajo", description = "Gestión de solicitudes y órdenes")
+public class OrdenController {
+
+    private final OrdenService ordenService;
+
+    public OrdenController(OrdenService ordenService) {
+        this.ordenService = ordenService;
+    }
+
+    @PostMapping
+    @PreAuthorize("hasAnyRole('CLIENTE','ADMIN')")
+    @Operation(summary = "Crear una solicitud de reparación")
+    public ResponseEntity<OrdenCreateResponse> crear(@Valid @RequestBody OrdenCreateRequest solicitud) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(ordenService.crear(solicitud));
+    }
+
+    @GetMapping
+    @Operation(summary = "Listar órdenes")
+    public PageResponse<OrdenResumenResponse> listar(
+            @RequestParam(required = false) EstadoOrden estado,
+            @RequestParam(required = false) Urgencia urgencia,
+            @RequestParam(required = false) Integer mecanicoId,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) Integer pagina,
+            @RequestParam(required = false) Integer limite) {
+        return ordenService.listar(estado, urgencia, mecanicoId, q, pagina, limite);
+    }
+
+    @GetMapping("/{id}")
+    @Operation(summary = "Obtener el detalle de una orden")
+    public OrdenDetalleResponse obtener(@PathVariable Integer id) {
+        return ordenService.obtener(id);
+    }
+}
