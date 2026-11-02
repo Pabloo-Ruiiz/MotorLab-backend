@@ -1,6 +1,7 @@
 package com.motorlab.repository;
 
 import java.util.Optional;
+import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +20,10 @@ public interface PiezaRepository extends JpaRepository<Pieza, Integer> {
     Optional<Pieza> findByReferencia(String referencia);
 
     boolean existsByReferencia(String referencia);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select p from Pieza p where p.id in :ids order by p.id")
+    List<Pieza> findAllByIdForUpdate(@Param("ids") List<Integer> ids);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select p from Pieza p where p.id = :id")
