@@ -13,13 +13,16 @@ import com.motorlab.dto.orden.OrdenCreateRequest;
 import com.motorlab.dto.orden.OrdenCreateResponse;
 import com.motorlab.dto.orden.OrdenDetalleResponse;
 import com.motorlab.dto.orden.OrdenResumenResponse;
+import com.motorlab.dto.orden.AsignacionRequest;
 import com.motorlab.entity.OrdenResumen;
 import com.motorlab.entity.OrdenTrabajo;
 import com.motorlab.entity.Usuario;
 import com.motorlab.entity.Vehiculo;
 import com.motorlab.entity.enums.EstadoOrden;
+import com.motorlab.entity.enums.Rol;
 import com.motorlab.entity.enums.TipoNotificacion;
 import com.motorlab.exception.RecursoNoEncontradoException;
+import com.motorlab.exception.SolicitudInvalidaException;
 import com.motorlab.mapper.OrdenMapper;
 import com.motorlab.repository.OrdenResumenSpecifications;
 import com.motorlab.repository.OrdenResumenRepository;
@@ -131,6 +134,25 @@ public class OrdenService {
         OrdenTrabajo orden = obtenerEntidadAutorizada(id);
         return ordenMapper.aDetalleResponse(
                 orden, presupuestoRepository.findByOrdenId(id).orElse(null));
+    }
+
+    @Transactional
+    public OrdenDetalleResponse asignar(Integer id, AsignacionRequest solicitud) {
+        if (!SecurityUtils.esAdmin()) {
+            throw new SolicitudInvalidaException("Solo un administrador puede asignar órdenes");
+        }
+        OrdenTrabajo orden = ordenTrabajoRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Orden no encontrada"));
+        Usuario mecanico = usuarioRepository.findById(solicitud.mecanicoId())
+                .filter(usuario -> usuario.isActivo() && usuario.getRol() == Rol.mecanico)
+                .orElseThrow(() -> new SolicitudInvalidaException(
+                        "El usuario indicado no es un mecánico activo"));
+        orden.setMecanico(mecanico);
+        orden.setElevador(solicitud.elevador() == null ? null : solicitud.elevador().trim());
+        orden.setFechaEstimada(solicitud.fechaEstimada());
+        return ordenMapper.aDetalleResponse(
+                ordenTrabajoRepository.save(orden),
+                presupuestoRepository.findByOrdenId(id).orElse(null));
     }
 
     @Transactional(readOnly = true)
