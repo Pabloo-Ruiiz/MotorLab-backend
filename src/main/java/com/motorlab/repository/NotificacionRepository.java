@@ -13,9 +13,9 @@ import com.motorlab.entity.Notificacion;
 
 public interface NotificacionRepository extends JpaRepository<Notificacion, Integer> {
 
-    Page<Notificacion> findByUsuarioIdOrderByIdDesc(Integer usuarioId, Pageable pageable);
+    Page<Notificacion> findByUsuarioIdOrderByCreadaEnDescIdDesc(Integer usuarioId, Pageable pageable);
 
-    Page<Notificacion> findByUsuarioIdAndLeidaOrderByIdDesc(
+    Page<Notificacion> findByUsuarioIdAndLeidaOrderByCreadaEnDescIdDesc(
             Integer usuarioId, boolean leida, Pageable pageable);
 
     Optional<Notificacion> findByIdAndUsuarioId(Integer id, Integer usuarioId);
