@@ -18,6 +18,7 @@ import com.motorlab.dto.presupuesto.LineaCreadaResponse;
 import com.motorlab.dto.presupuesto.LineaRequest;
 import com.motorlab.dto.presupuesto.PresupuestoResponse;
 import com.motorlab.dto.presupuesto.PresupuestoUpdateRequest;
+import com.motorlab.dto.presupuesto.RechazoRequest;
 import com.motorlab.dto.presupuesto.TotalesResponse;
 import com.motorlab.service.PresupuestoService;
 
@@ -75,5 +76,24 @@ public class PresupuestoController {
     public TotalesResponse eliminarLinea(
             @PathVariable Integer id, @PathVariable Integer lineaId) {
         return presupuestoService.eliminarLinea(id, lineaId);
+    }
+
+    @PostMapping("/presupuestos/{id}/enviar")
+    @PreAuthorize("hasRole('ADMIN')")
+    public PresupuestoResponse enviar(@PathVariable Integer id) {
+        return presupuestoService.enviar(id);
+    }
+
+    @PostMapping("/presupuestos/{id}/autorizar")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public PresupuestoResponse autorizar(@PathVariable Integer id) {
+        return presupuestoService.autorizar(id);
+    }
+
+    @PostMapping("/presupuestos/{id}/rechazar")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public PresupuestoResponse rechazar(
+            @PathVariable Integer id, @Valid @RequestBody RechazoRequest solicitud) {
+        return presupuestoService.rechazar(id, solicitud);
     }
 }

@@ -1,9 +1,12 @@
 package com.motorlab.service;
 
 import java.math.BigDecimal;
+import java.text.NumberFormat;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import jakarta.persistence.EntityManager;
@@ -17,6 +20,7 @@ import com.motorlab.dto.presupuesto.LineaCreadaResponse;
 import com.motorlab.dto.presupuesto.LineaRequest;
 import com.motorlab.dto.presupuesto.PresupuestoResponse;
 import com.motorlab.dto.presupuesto.PresupuestoUpdateRequest;
+import com.motorlab.dto.presupuesto.RechazoRequest;
 import com.motorlab.dto.presupuesto.TotalesResponse;
 import com.motorlab.entity.LineaPresupuesto;
 import com.motorlab.entity.OrdenTrabajo;
@@ -30,6 +34,7 @@ import com.motorlab.exception.PresupuestoNoEditableException;
 import com.motorlab.exception.PresupuestoYaExisteException;
 import com.motorlab.exception.RecursoNoEncontradoException;
 import com.motorlab.exception.SolicitudInvalidaException;
+import com.motorlab.exception.TransicionNoPermitidaException;
 import com.motorlab.mapper.PresupuestoMapper;
 import com.motorlab.repository.LineaPresupuestoRepository;
 import com.motorlab.repository.OrdenTrabajoRepository;
@@ -48,6 +53,7 @@ public class PresupuestoService {
     private final UsuarioRepository usuarioRepository;
     private final PresupuestoMapper mapper;
     private final OrdenEstadoService ordenEstadoService;
+    private final NotificacionService notificacionService;
     private final EntityManager entityManager;
 
     public PresupuestoService(
@@ -58,6 +64,7 @@ public class PresupuestoService {
             UsuarioRepository usuarioRepository,
             PresupuestoMapper mapper,
             OrdenEstadoService ordenEstadoService,
+            NotificacionService notificacionService,
             EntityManager entityManager) {
         this.presupuestoRepository = presupuestoRepository;
         this.lineaRepository = lineaRepository;
@@ -66,6 +73,7 @@ public class PresupuestoService {
         this.usuarioRepository = usuarioRepository;
         this.mapper = mapper;
         this.ordenEstadoService = ordenEstadoService;
+        this.notificacionService = notificacionService;
         this.entityManager = entityManager;
     }
 
@@ -155,6 +163,81 @@ public class PresupuestoService {
         return mapper.aTotalesResponse(presupuesto);
     }
 
+    @Transactional
+    public PresupuestoResponse enviar(Integer id) {
+        exigirAdministrador();
+        Presupuesto presupuesto = presupuestoRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Presupuesto no encontrado"));
+        exigirEnBorrador(presupuesto);
+        if (lineaRepository.countByPresupuestoId(id) == 0) {
+            throw new SolicitudInvalidaException("El presupuesto no tiene líneas");
+        }
+
+        presupuesto.setEstado(EstadoPresupuesto.enviado);
+        presupuesto.setEnviadoEn(LocalDateTime.now());
+        presupuestoRepository.save(presupuesto);
+
+        Usuario administrador = usuarioRepository.findById(SecurityUtils.idActual())
+                .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado"));
+        ordenEstadoService.aplicarCambio(
+                presupuesto.getOrden(),
+                EstadoOrden.presupuesto_enviado,
+                "Presupuesto enviado al cliente",
+                administrador);
+        String total = NumberFormat.getNumberInstance(new Locale("es", "ES"))
+                .format(presupuesto.getTotal());
+        notificacionService.notificarCliente(
+                presupuesto.getOrden(),
+                com.motorlab.entity.enums.TipoNotificacion.presupuesto_listo,
+                "Tu presupuesto está listo · " + total + " €");
+        return respuesta(presupuesto, true);
+    }
+
+    @Transactional
+    public PresupuestoResponse autorizar(Integer id) {
+        Presupuesto presupuesto = obtenerPresupuestoBloqueadoYPropietario(id);
+        exigirEnviado(presupuesto);
+
+        presupuesto.setEstado(EstadoPresupuesto.autorizado);
+        presupuesto.setRespondidoEn(LocalDateTime.now());
+        presupuestoRepository.save(presupuesto);
+        Usuario cliente = usuarioRepository.findById(SecurityUtils.idActual())
+                .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado"));
+        ordenEstadoService.aplicarCambio(
+                presupuesto.getOrden(),
+                EstadoOrden.presupuesto_autorizado,
+                "Presupuesto autorizado por el cliente",
+                cliente);
+        notificacionService.notificarAdmins(
+                presupuesto.getOrden(),
+                com.motorlab.entity.enums.TipoNotificacion.presupuesto_respondido,
+                "El cliente ha autorizado el presupuesto");
+        return respuesta(presupuesto, false);
+    }
+
+    @Transactional
+    public PresupuestoResponse rechazar(Integer id, RechazoRequest solicitud) {
+        Presupuesto presupuesto = obtenerPresupuestoBloqueadoYPropietario(id);
+        exigirEnviado(presupuesto);
+
+        presupuesto.setEstado(EstadoPresupuesto.rechazado);
+        presupuesto.setRespondidoEn(LocalDateTime.now());
+        presupuesto.setMotivoRechazo(solicitud.motivo());
+        presupuestoRepository.save(presupuesto);
+        Usuario cliente = usuarioRepository.findById(SecurityUtils.idActual())
+                .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado"));
+        ordenEstadoService.aplicarCambio(
+                presupuesto.getOrden(),
+                EstadoOrden.rechazada,
+                "Presupuesto rechazado por el cliente",
+                cliente);
+        notificacionService.notificarAdmins(
+                presupuesto.getOrden(),
+                com.motorlab.entity.enums.TipoNotificacion.presupuesto_respondido,
+                "El cliente ha rechazado el presupuesto");
+        return respuesta(presupuesto, false);
+    }
+
     private LineaCreadaResponse guardarLineaYResponder(Presupuesto presupuesto, LineaPresupuesto linea) {
         lineaRepository.flush();
         entityManager.refresh(presupuesto);
@@ -239,6 +322,28 @@ public class PresupuestoService {
             throw new PresupuestoNoEditableException();
         }
         return presupuesto;
+    }
+
+    private Presupuesto obtenerPresupuestoBloqueadoYPropietario(Integer id) {
+        Presupuesto presupuesto = presupuestoRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Presupuesto no encontrado"));
+        if (!SecurityUtils.esCliente()
+                || !presupuesto.getOrden().getVehiculo().getUsuario().getId().equals(SecurityUtils.idActual())) {
+            throw new RecursoNoEncontradoException("Presupuesto no encontrado");
+        }
+        return presupuesto;
+    }
+
+    private void exigirEnBorrador(Presupuesto presupuesto) {
+        if (presupuesto.getEstado() != EstadoPresupuesto.borrador) {
+            throw new PresupuestoNoEditableException();
+        }
+    }
+
+    private void exigirEnviado(Presupuesto presupuesto) {
+        if (presupuesto.getEstado() != EstadoPresupuesto.enviado) {
+            throw new TransicionNoPermitidaException("El presupuesto no está pendiente de respuesta");
+        }
     }
 
     private PresupuestoResponse respuesta(Presupuesto presupuesto, boolean incluirAvisos) {
