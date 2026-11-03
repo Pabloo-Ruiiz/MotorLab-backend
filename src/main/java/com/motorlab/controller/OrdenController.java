@@ -20,6 +20,7 @@ import com.motorlab.dto.orden.OrdenCreateRequest;
 import com.motorlab.dto.orden.OrdenCreateResponse;
 import com.motorlab.dto.orden.OrdenDetalleResponse;
 import com.motorlab.dto.orden.OrdenResumenResponse;
+import com.motorlab.dto.orden.SeguimientoResponse;
 import com.motorlab.entity.enums.EstadoOrden;
 import com.motorlab.entity.enums.Urgencia;
 import com.motorlab.service.OrdenService;
@@ -89,5 +90,11 @@ public class OrdenController {
     @Operation(summary = "Obtener el detalle de una orden")
     public OrdenDetalleResponse obtener(@PathVariable Integer id) {
         return ordenService.obtener(id);
+    }
+
+    @GetMapping("/{id}/seguimiento")
+    @Operation(summary = "Consultar el seguimiento de una orden")
+    public SeguimientoResponse seguimiento(@PathVariable Integer id) {
+        return ordenService.seguimiento(id);
     }
 }

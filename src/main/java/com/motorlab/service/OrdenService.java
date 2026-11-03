@@ -15,6 +15,7 @@ import com.motorlab.dto.orden.OrdenDetalleResponse;
 import com.motorlab.dto.orden.OrdenResumenResponse;
 import com.motorlab.dto.orden.AsignacionRequest;
 import com.motorlab.dto.orden.CambioEstadoRequest;
+import com.motorlab.dto.orden.SeguimientoResponse;
 import com.motorlab.entity.OrdenResumen;
 import com.motorlab.entity.OrdenTrabajo;
 import com.motorlab.entity.Usuario;
@@ -141,6 +142,12 @@ public class OrdenService {
         OrdenTrabajo orden = obtenerEntidadAutorizada(id);
         return ordenMapper.aDetalleResponse(
                 orden, presupuestoRepository.findByOrdenId(id).orElse(null));
+    }
+
+    @Transactional(readOnly = true)
+    public SeguimientoResponse seguimiento(Integer id) {
+        OrdenTrabajo orden = obtenerEntidadAutorizada(id);
+        return ordenMapper.aSeguimientoResponse(orden, seguimientoService.listar(id));
     }
 
     @Transactional

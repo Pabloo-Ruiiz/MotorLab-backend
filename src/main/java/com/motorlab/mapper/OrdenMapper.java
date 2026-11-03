@@ -1,10 +1,15 @@
 package com.motorlab.mapper;
 
+import java.util.List;
+
 import org.springframework.stereotype.Component;
 
 import com.motorlab.dto.orden.OrdenDetalleResponse;
 import com.motorlab.dto.orden.OrdenResumenResponse;
+import com.motorlab.dto.orden.EventoResponse;
+import com.motorlab.dto.orden.SeguimientoResponse;
 import com.motorlab.dto.presupuesto.PresupuestoResumenResponse;
+import com.motorlab.entity.EventoSeguimiento;
 import com.motorlab.entity.OrdenResumen;
 import com.motorlab.entity.OrdenTrabajo;
 import com.motorlab.entity.Presupuesto;
@@ -60,5 +65,26 @@ public class OrdenMapper {
                 orden.getMecanico() == null ? null : usuarioMapper.aResumen(orden.getMecanico()),
                 presupuesto == null ? null : new PresupuestoResumenResponse(
                         presupuesto.getId(), presupuesto.getEstado(), presupuesto.getTotal()));
+    }
+
+    public SeguimientoResponse aSeguimientoResponse(
+            OrdenTrabajo orden, List<EventoSeguimiento> eventos) {
+        String version = orden.getVehiculo().getVersion();
+        String vehiculo = orden.getVehiculo().getMarca()
+                + " " + orden.getVehiculo().getModelo()
+                + (version == null || version.isBlank() ? "" : " " + version)
+                + " · " + orden.getVehiculo().getMatricula();
+        return new SeguimientoResponse(
+                orden.getId(),
+                vehiculo,
+                orden.getEstado(),
+                orden.getEstado().progreso(),
+                orden.getFechaEstimada(),
+                eventos.stream()
+                        .map(evento -> new EventoResponse(
+                                evento.getEstado(),
+                                evento.getDescripcion(),
+                                evento.getFechaHora()))
+                        .toList());
     }
 }
