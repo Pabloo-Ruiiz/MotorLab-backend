@@ -16,6 +16,8 @@ import com.motorlab.dto.usuario.UsuarioResponse;
 import com.motorlab.service.AuthService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
@@ -33,18 +35,27 @@ public class AuthController {
 
     @PostMapping("/registro")
     @Operation(summary = "Registrar un cliente")
+    @ApiResponses({
+            @ApiResponse(responseCode = "409", description = "El email ya está registrado")
+    })
     public ResponseEntity<UsuarioResponse> registrar(@Valid @RequestBody RegistroRequest solicitud) {
         return ResponseEntity.status(HttpStatus.CREATED).body(authService.registrar(solicitud));
     }
 
     @PostMapping("/login")
     @Operation(summary = "Iniciar sesión")
+    @ApiResponses({
+            @ApiResponse(responseCode = "401", description = "Credenciales incorrectas")
+    })
     public LoginResponse login(@Valid @RequestBody LoginRequest solicitud) {
         return authService.login(solicitud);
     }
 
     @GetMapping("/yo")
     @Operation(summary = "Consultar el usuario autenticado")
+    @ApiResponses({
+            @ApiResponse(responseCode = "401", description = "Autenticación requerida")
+    })
     public UsuarioResponse yo() {
         return authService.yo();
     }

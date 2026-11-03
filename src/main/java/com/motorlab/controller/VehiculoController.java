@@ -21,6 +21,8 @@ import com.motorlab.dto.vehiculo.VehiculoResponse;
 import com.motorlab.service.VehiculoService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
@@ -39,6 +41,10 @@ public class VehiculoController {
 
     @GetMapping
     @Operation(summary = "Listar vehículos")
+    @ApiResponses({
+            @ApiResponse(responseCode = "401", description = "Autenticación requerida"),
+            @ApiResponse(responseCode = "403", description = "Rol no autorizado")
+    })
     public PageResponse<VehiculoResponse> listar(
             @RequestParam(required = false) Integer pagina,
             @RequestParam(required = false) Integer limite) {
@@ -47,18 +53,33 @@ public class VehiculoController {
 
     @PostMapping
     @Operation(summary = "Crear un vehículo")
+    @ApiResponses({
+            @ApiResponse(responseCode = "401", description = "Autenticación requerida"),
+            @ApiResponse(responseCode = "403", description = "Rol no autorizado"),
+            @ApiResponse(responseCode = "409", description = "La matrícula ya está registrada")
+    })
     public ResponseEntity<VehiculoResponse> crear(@Valid @RequestBody VehiculoRequest solicitud) {
         return ResponseEntity.status(HttpStatus.CREATED).body(vehiculoService.crear(solicitud));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener un vehículo")
+    @ApiResponses({
+            @ApiResponse(responseCode = "401", description = "Autenticación requerida"),
+            @ApiResponse(responseCode = "403", description = "Rol no autorizado"),
+            @ApiResponse(responseCode = "404", description = "Vehículo no encontrado")
+    })
     public VehiculoResponse obtener(@PathVariable Integer id) {
         return vehiculoService.obtener(id);
     }
 
     @GetMapping("/{id}/historial")
     @Operation(summary = "Consultar el historial de un vehículo")
+    @ApiResponses({
+            @ApiResponse(responseCode = "401", description = "Autenticación requerida"),
+            @ApiResponse(responseCode = "403", description = "Rol no autorizado"),
+            @ApiResponse(responseCode = "404", description = "Vehículo no encontrado")
+    })
     public PageResponse<OrdenResumenResponse> historial(
             @PathVariable Integer id,
             @RequestParam(required = false) Integer pagina,
@@ -68,6 +89,12 @@ public class VehiculoController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Actualizar un vehículo")
+    @ApiResponses({
+            @ApiResponse(responseCode = "401", description = "Autenticación requerida"),
+            @ApiResponse(responseCode = "403", description = "Rol no autorizado"),
+            @ApiResponse(responseCode = "404", description = "Vehículo no encontrado"),
+            @ApiResponse(responseCode = "409", description = "La matrícula ya está registrada")
+    })
     public VehiculoResponse actualizar(
             @PathVariable Integer id,
             @Valid @RequestBody VehiculoRequest solicitud) {
@@ -76,6 +103,12 @@ public class VehiculoController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Dar de baja un vehículo")
+    @ApiResponses({
+            @ApiResponse(responseCode = "401", description = "Autenticación requerida"),
+            @ApiResponse(responseCode = "403", description = "Rol no autorizado"),
+            @ApiResponse(responseCode = "404", description = "Vehículo no encontrado"),
+            @ApiResponse(responseCode = "409", description = "El vehículo tiene órdenes abiertas")
+    })
     public ResponseEntity<Void> darDeBaja(@PathVariable Integer id) {
         vehiculoService.darDeBaja(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
