@@ -15,6 +15,8 @@ public interface OrdenTrabajoRepository extends JpaRepository<OrdenTrabajo, Inte
 
     boolean existsByVehiculoIdAndEstadoNotIn(Integer vehiculoId, Collection<EstadoOrden> estados);
 
+    long countByEstadoNotIn(Collection<EstadoOrden> estados);
+
     @Query("select o.estado, count(o) from OrdenTrabajo o group by o.estado")
     List<Object[]> contarPorEstado();
 }
