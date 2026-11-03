@@ -9,7 +9,10 @@ import com.motorlab.entity.OrdenTrabajo;
 import com.motorlab.entity.Usuario;
 import com.motorlab.entity.enums.EstadoOrden;
 import com.motorlab.entity.enums.TipoNotificacion;
+import com.motorlab.entity.Presupuesto;
 import com.motorlab.exception.TransicionNoPermitidaException;
+import com.motorlab.repository.EventoSeguimientoRepository;
+import com.motorlab.repository.PresupuestoRepository;
 import com.motorlab.repository.OrdenTrabajoRepository;
 
 @Service
@@ -19,16 +22,25 @@ public class OrdenEstadoService {
     private final OrdenTrabajoRepository ordenTrabajoRepository;
     private final SeguimientoService seguimientoService;
     private final NotificacionService notificacionService;
+    private final EventoSeguimientoRepository eventoSeguimientoRepository;
+    private final PresupuestoRepository presupuestoRepository;
+    private final PiezaService piezaService;
 
     public OrdenEstadoService(
             TransicionesEstado transicionesEstado,
             OrdenTrabajoRepository ordenTrabajoRepository,
             SeguimientoService seguimientoService,
-            NotificacionService notificacionService) {
+            NotificacionService notificacionService,
+            EventoSeguimientoRepository eventoSeguimientoRepository,
+            PresupuestoRepository presupuestoRepository,
+            PiezaService piezaService) {
         this.transicionesEstado = transicionesEstado;
         this.ordenTrabajoRepository = ordenTrabajoRepository;
         this.seguimientoService = seguimientoService;
         this.notificacionService = notificacionService;
+        this.eventoSeguimientoRepository = eventoSeguimientoRepository;
+        this.presupuestoRepository = presupuestoRepository;
+        this.piezaService = piezaService;
     }
 
     @Transactional
@@ -38,6 +50,15 @@ public class OrdenEstadoService {
         if (!transicionesEstado.permitida(anterior, nuevo)) {
             throw new TransicionNoPermitidaException(
                     "No se puede pasar de " + anterior + " a " + nuevo);
+        }
+
+        if (nuevo == EstadoOrden.arreglando
+                && !eventoSeguimientoRepository.existsByOrdenIdAndEstado(
+                        orden.getId(), EstadoOrden.arreglando)) {
+            Presupuesto presupuesto = presupuestoRepository.findByOrdenId(orden.getId())
+                    .orElseThrow(() -> new TransicionNoPermitidaException(
+                            "La orden no tiene un presupuesto asociado"));
+            piezaService.descontarStockDePresupuesto(presupuesto.getId());
         }
 
         orden.setEstado(nuevo);

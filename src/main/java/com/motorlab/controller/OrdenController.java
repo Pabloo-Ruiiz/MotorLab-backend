@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.motorlab.dto.common.PageResponse;
 import com.motorlab.dto.orden.AsignacionRequest;
+import com.motorlab.dto.orden.CambioEstadoRequest;
 import com.motorlab.dto.orden.OrdenCreateRequest;
 import com.motorlab.dto.orden.OrdenCreateResponse;
 import com.motorlab.dto.orden.OrdenDetalleResponse;
@@ -54,6 +55,22 @@ public class OrdenController {
             @PathVariable Integer id,
             @Valid @RequestBody AsignacionRequest solicitud) {
         return ordenService.asignar(id, solicitud);
+    }
+
+    @PatchMapping("/{id}/estado")
+    @PreAuthorize("hasAnyRole('ADMIN','MECANICO')")
+    @Operation(summary = "Cambiar el estado de una orden")
+    public OrdenDetalleResponse cambiarEstado(
+            @PathVariable Integer id,
+            @Valid @RequestBody CambioEstadoRequest solicitud) {
+        return ordenService.cambiarEstado(id, solicitud);
+    }
+
+    @PostMapping("/{id}/cancelar")
+    @PreAuthorize("hasAnyRole('CLIENTE','ADMIN')")
+    @Operation(summary = "Cancelar una orden")
+    public OrdenDetalleResponse cancelar(@PathVariable Integer id) {
+        return ordenService.cancelar(id);
     }
 
     @GetMapping

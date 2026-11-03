@@ -14,15 +14,19 @@ import com.motorlab.dto.orden.OrdenCreateResponse;
 import com.motorlab.dto.orden.OrdenDetalleResponse;
 import com.motorlab.dto.orden.OrdenResumenResponse;
 import com.motorlab.dto.orden.AsignacionRequest;
+import com.motorlab.dto.orden.CambioEstadoRequest;
 import com.motorlab.entity.OrdenResumen;
 import com.motorlab.entity.OrdenTrabajo;
 import com.motorlab.entity.Usuario;
 import com.motorlab.entity.Vehiculo;
 import com.motorlab.entity.enums.EstadoOrden;
+import com.motorlab.entity.enums.EstadoPresupuesto;
 import com.motorlab.entity.enums.Rol;
 import com.motorlab.entity.enums.TipoNotificacion;
 import com.motorlab.exception.RecursoNoEncontradoException;
 import com.motorlab.exception.SolicitudInvalidaException;
+import com.motorlab.exception.SinPermisoException;
+import com.motorlab.exception.TransicionNoPermitidaException;
 import com.motorlab.mapper.OrdenMapper;
 import com.motorlab.repository.OrdenResumenSpecifications;
 import com.motorlab.repository.OrdenResumenRepository;
@@ -43,6 +47,7 @@ public class OrdenService {
     private final OrdenMapper ordenMapper;
     private final SeguimientoService seguimientoService;
     private final NotificacionService notificacionService;
+    private final OrdenEstadoService ordenEstadoService;
     private final EntityManager entityManager;
 
     public OrdenService(
@@ -54,6 +59,7 @@ public class OrdenService {
             OrdenMapper ordenMapper,
             SeguimientoService seguimientoService,
             NotificacionService notificacionService,
+            OrdenEstadoService ordenEstadoService,
             EntityManager entityManager) {
         this.ordenTrabajoRepository = ordenTrabajoRepository;
         this.ordenResumenRepository = ordenResumenRepository;
@@ -63,6 +69,7 @@ public class OrdenService {
         this.ordenMapper = ordenMapper;
         this.seguimientoService = seguimientoService;
         this.notificacionService = notificacionService;
+        this.ordenEstadoService = ordenEstadoService;
         this.entityManager = entityManager;
     }
 
@@ -153,6 +160,79 @@ public class OrdenService {
         return ordenMapper.aDetalleResponse(
                 ordenTrabajoRepository.save(orden),
                 presupuestoRepository.findByOrdenId(id).orElse(null));
+    }
+
+    @Transactional
+    public OrdenDetalleResponse cambiarEstado(Integer id, CambioEstadoRequest solicitud) {
+        OrdenTrabajo orden;
+        try {
+            orden = obtenerEntidadAutorizada(id);
+        } catch (RecursoNoEncontradoException excepcion) {
+            if (SecurityUtils.esMecanico() && ordenTrabajoRepository.existsById(id)) {
+                throw new SinPermisoException("El mecánico no tiene asignada esta orden");
+            }
+            throw excepcion;
+        }
+
+        if (SecurityUtils.esMecanico()
+                && (orden.getMecanico() == null
+                        || !orden.getMecanico().getId().equals(SecurityUtils.idActual()))) {
+            throw new SinPermisoException("El mecánico no tiene asignada esta orden");
+        }
+        if (SecurityUtils.esAdmin()
+                && TransicionesEstado.ESTADOS_AUTOMATICOS.contains(solicitud.estado())) {
+            throw new TransicionNoPermitidaException(
+                    "El estado " + solicitud.estado() + " se aplica automáticamente");
+        }
+        if (SecurityUtils.esMecanico()
+                && !TransicionesEstado.ESTADOS_MECANICO.contains(solicitud.estado())) {
+            throw new SinPermisoException("El mecánico no puede aplicar ese estado");
+        }
+
+        Usuario autor = usuarioRepository.findById(SecurityUtils.idActual())
+                .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado"));
+        OrdenTrabajo actualizada = ordenEstadoService.aplicarCambio(
+                orden, solicitud.estado(), solicitud.descripcion(), autor);
+        return ordenMapper.aDetalleResponse(
+                actualizada, presupuestoRepository.findByOrdenId(id).orElse(null));
+    }
+
+    @Transactional
+    public OrdenDetalleResponse cancelar(Integer id) {
+        OrdenTrabajo orden = ordenTrabajoRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Orden no encontrada"));
+        boolean administrador = SecurityUtils.esAdmin();
+        boolean propietario = orden.getVehiculo().getUsuario().getId().equals(SecurityUtils.idActual());
+        if (!administrador && !SecurityUtils.esCliente()) {
+            throw new SinPermisoException("Solo el cliente propietario o un administrador puede cancelar");
+        }
+        if (!administrador && !propietario) {
+            throw new SinPermisoException("Solo el cliente propietario puede cancelar la orden");
+        }
+        boolean estadoCancelable = orden.getEstado() == EstadoOrden.solicitud_recibida
+                || orden.getEstado() == EstadoOrden.pendiente_presupuesto
+                || orden.getEstado() == EstadoOrden.presupuesto_enviado
+                || (administrador && orden.getEstado() == EstadoOrden.presupuesto_autorizado);
+        if (!estadoCancelable) {
+            throw new TransicionNoPermitidaException(
+                    "La orden no se puede cancelar en estado " + orden.getEstado());
+        }
+
+        presupuestoRepository.findByOrdenId(id).ifPresent(presupuesto -> {
+            if (presupuesto.getEstado() == EstadoPresupuesto.borrador
+                    || presupuesto.getEstado() == EstadoPresupuesto.enviado) {
+                presupuesto.setEstado(EstadoPresupuesto.rechazado);
+                presupuesto.setMotivoRechazo("Orden cancelada");
+                presupuestoRepository.save(presupuesto);
+            }
+        });
+
+        Usuario autor = usuarioRepository.findById(SecurityUtils.idActual())
+                .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado"));
+        OrdenTrabajo cancelada = ordenEstadoService.aplicarCambio(
+                orden, EstadoOrden.cancelada, "Orden cancelada", autor);
+        return ordenMapper.aDetalleResponse(
+                cancelada, presupuestoRepository.findByOrdenId(id).orElse(null));
     }
 
     @Transactional(readOnly = true)
