@@ -26,6 +26,8 @@ import com.motorlab.entity.enums.Urgencia;
 import com.motorlab.service.OrdenService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
@@ -45,6 +47,11 @@ public class OrdenController {
     @PostMapping
     @PreAuthorize("hasAnyRole('CLIENTE','ADMIN')")
     @Operation(summary = "Crear una solicitud de reparación")
+    @ApiResponses({
+            @ApiResponse(responseCode = "401", description = "Autenticación requerida"),
+            @ApiResponse(responseCode = "403", description = "Rol no autorizado"),
+            @ApiResponse(responseCode = "404", description = "Vehículo no encontrado")
+    })
     public ResponseEntity<OrdenCreateResponse> crear(@Valid @RequestBody OrdenCreateRequest solicitud) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ordenService.crear(solicitud));
     }
@@ -52,6 +59,11 @@ public class OrdenController {
     @PatchMapping("/{id}/asignacion")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Asignar un mecánico a una orden")
+    @ApiResponses({
+            @ApiResponse(responseCode = "401", description = "Autenticación requerida"),
+            @ApiResponse(responseCode = "403", description = "Solo administradores"),
+            @ApiResponse(responseCode = "404", description = "Orden no encontrada")
+    })
     public OrdenDetalleResponse asignar(
             @PathVariable Integer id,
             @Valid @RequestBody AsignacionRequest solicitud) {
@@ -61,6 +73,12 @@ public class OrdenController {
     @PatchMapping("/{id}/estado")
     @PreAuthorize("hasAnyRole('ADMIN','MECANICO')")
     @Operation(summary = "Cambiar el estado de una orden")
+    @ApiResponses({
+            @ApiResponse(responseCode = "401", description = "Autenticación requerida"),
+            @ApiResponse(responseCode = "403", description = "Rol no autorizado o mecánico no asignado"),
+            @ApiResponse(responseCode = "404", description = "Orden no encontrada"),
+            @ApiResponse(responseCode = "409", description = "Transición no permitida o stock insuficiente")
+    })
     public OrdenDetalleResponse cambiarEstado(
             @PathVariable Integer id,
             @Valid @RequestBody CambioEstadoRequest solicitud) {
@@ -70,12 +88,22 @@ public class OrdenController {
     @PostMapping("/{id}/cancelar")
     @PreAuthorize("hasAnyRole('CLIENTE','ADMIN')")
     @Operation(summary = "Cancelar una orden")
+    @ApiResponses({
+            @ApiResponse(responseCode = "401", description = "Autenticación requerida"),
+            @ApiResponse(responseCode = "403", description = "El usuario no puede cancelar esta orden"),
+            @ApiResponse(responseCode = "404", description = "Orden no encontrada"),
+            @ApiResponse(responseCode = "409", description = "La orden no se puede cancelar en su estado actual")
+    })
     public OrdenDetalleResponse cancelar(@PathVariable Integer id) {
         return ordenService.cancelar(id);
     }
 
     @GetMapping
     @Operation(summary = "Listar órdenes")
+    @ApiResponses({
+            @ApiResponse(responseCode = "401", description = "Autenticación requerida"),
+            @ApiResponse(responseCode = "403", description = "Rol no autorizado")
+    })
     public PageResponse<OrdenResumenResponse> listar(
             @RequestParam(required = false) EstadoOrden estado,
             @RequestParam(required = false) Urgencia urgencia,
@@ -88,12 +116,22 @@ public class OrdenController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener el detalle de una orden")
+    @ApiResponses({
+            @ApiResponse(responseCode = "401", description = "Autenticación requerida"),
+            @ApiResponse(responseCode = "403", description = "Rol no autorizado"),
+            @ApiResponse(responseCode = "404", description = "Orden no encontrada")
+    })
     public OrdenDetalleResponse obtener(@PathVariable Integer id) {
         return ordenService.obtener(id);
     }
 
     @GetMapping("/{id}/seguimiento")
     @Operation(summary = "Consultar el seguimiento de una orden")
+    @ApiResponses({
+            @ApiResponse(responseCode = "401", description = "Autenticación requerida"),
+            @ApiResponse(responseCode = "403", description = "Rol no autorizado"),
+            @ApiResponse(responseCode = "404", description = "Orden no encontrada")
+    })
     public SeguimientoResponse seguimiento(@PathVariable Integer id) {
         return ordenService.seguimiento(id);
     }

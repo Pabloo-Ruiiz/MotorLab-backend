@@ -9,6 +9,8 @@ import com.motorlab.dto.panel.MetricasResponse;
 import com.motorlab.service.PanelService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
@@ -25,6 +27,10 @@ public class PanelController {
 
     @GetMapping("/metricas")
     @Operation(summary = "Consultar métricas del panel")
+    @ApiResponses({
+            @ApiResponse(responseCode = "401", description = "Autenticación requerida"),
+            @ApiResponse(responseCode = "403", description = "Solo administradores")
+    })
     public MetricasResponse metricas() {
         return panelService.obtenerMetricas();
     }

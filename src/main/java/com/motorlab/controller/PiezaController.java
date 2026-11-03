@@ -22,6 +22,8 @@ import com.motorlab.dto.pieza.StockDeltaRequest;
 import com.motorlab.service.PiezaService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
@@ -40,6 +42,10 @@ public class PiezaController {
 
     @GetMapping
     @Operation(summary = "Listar piezas")
+    @ApiResponses({
+            @ApiResponse(responseCode = "401", description = "Autenticación requerida"),
+            @ApiResponse(responseCode = "403", description = "Rol no autorizado")
+    })
     public PageResponse<PiezaResponse> listar(
             @RequestParam(required = false) String q,
             @RequestParam(defaultValue = "true") boolean soloActivas,
@@ -51,6 +57,11 @@ public class PiezaController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener una pieza")
+    @ApiResponses({
+            @ApiResponse(responseCode = "401", description = "Autenticación requerida"),
+            @ApiResponse(responseCode = "403", description = "Rol no autorizado"),
+            @ApiResponse(responseCode = "404", description = "Pieza no encontrada")
+    })
     public PiezaResponse obtener(@PathVariable Integer id) {
         return piezaService.obtener(id);
     }
@@ -58,6 +69,11 @@ public class PiezaController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Crear una pieza")
+    @ApiResponses({
+            @ApiResponse(responseCode = "401", description = "Autenticación requerida"),
+            @ApiResponse(responseCode = "403", description = "Solo administradores"),
+            @ApiResponse(responseCode = "409", description = "La referencia ya está registrada")
+    })
     public ResponseEntity<PiezaResponse> crear(@Valid @RequestBody PiezaRequest solicitud) {
         return ResponseEntity.status(HttpStatus.CREATED).body(piezaService.crear(solicitud));
     }
@@ -65,6 +81,12 @@ public class PiezaController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Actualizar una pieza")
+    @ApiResponses({
+            @ApiResponse(responseCode = "401", description = "Autenticación requerida"),
+            @ApiResponse(responseCode = "403", description = "Solo administradores"),
+            @ApiResponse(responseCode = "404", description = "Pieza no encontrada"),
+            @ApiResponse(responseCode = "409", description = "La referencia ya está registrada")
+    })
     public PiezaResponse actualizar(
             @PathVariable Integer id,
             @Valid @RequestBody PiezaRequest solicitud) {
@@ -74,6 +96,12 @@ public class PiezaController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Dar de baja una pieza")
+    @ApiResponses({
+            @ApiResponse(responseCode = "401", description = "Autenticación requerida"),
+            @ApiResponse(responseCode = "403", description = "Solo administradores"),
+            @ApiResponse(responseCode = "404", description = "Pieza no encontrada"),
+            @ApiResponse(responseCode = "409", description = "La pieza aparece en presupuestos")
+    })
     public ResponseEntity<Void> darDeBaja(@PathVariable Integer id) {
         piezaService.darDeBaja(id);
         return ResponseEntity.noContent().build();
@@ -82,6 +110,12 @@ public class PiezaController {
     @PatchMapping("/{id}/stock")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Ajustar el stock de una pieza")
+    @ApiResponses({
+            @ApiResponse(responseCode = "401", description = "Autenticación requerida"),
+            @ApiResponse(responseCode = "403", description = "Solo administradores"),
+            @ApiResponse(responseCode = "404", description = "Pieza no encontrada"),
+            @ApiResponse(responseCode = "409", description = "El stock resultante no puede ser negativo")
+    })
     public PiezaResponse ajustarStock(
             @PathVariable Integer id,
             @Valid @RequestBody StockDeltaRequest solicitud) {
