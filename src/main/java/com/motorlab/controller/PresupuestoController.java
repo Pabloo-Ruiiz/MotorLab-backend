@@ -27,6 +27,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 
 @RestController
 @Validated
@@ -49,7 +50,7 @@ public class PresupuestoController {
             @ApiResponse(responseCode = "404", description = "Orden no encontrada"),
             @ApiResponse(responseCode = "409", description = "La orden ya tiene presupuesto o no admite presupuesto")
     })
-    public ResponseEntity<PresupuestoResponse> crear(@PathVariable Integer ordenId) {
+    public ResponseEntity<PresupuestoResponse> crear(@PathVariable @Positive Integer ordenId) {
         return ResponseEntity.status(HttpStatus.CREATED).body(presupuestoService.crear(ordenId));
     }
 
@@ -61,7 +62,7 @@ public class PresupuestoController {
             @ApiResponse(responseCode = "403", description = "Rol no autorizado"),
             @ApiResponse(responseCode = "404", description = "Orden o presupuesto no encontrado")
     })
-    public PresupuestoResponse obtenerPorOrden(@PathVariable Integer ordenId) {
+    public PresupuestoResponse obtenerPorOrden(@PathVariable @Positive Integer ordenId) {
         return presupuestoService.obtenerPorOrden(ordenId);
     }
 
@@ -75,7 +76,7 @@ public class PresupuestoController {
             @ApiResponse(responseCode = "409", description = "El presupuesto no es editable")
     })
     public PresupuestoResponse actualizar(
-            @PathVariable Integer id, @Valid @RequestBody PresupuestoUpdateRequest solicitud) {
+            @PathVariable @Positive Integer id, @Valid @RequestBody PresupuestoUpdateRequest solicitud) {
         return presupuestoService.actualizar(id, solicitud);
     }
 
@@ -89,7 +90,7 @@ public class PresupuestoController {
             @ApiResponse(responseCode = "409", description = "El presupuesto no es editable")
     })
     public ResponseEntity<LineaCreadaResponse> anadirLinea(
-            @PathVariable Integer id, @Valid @RequestBody LineaRequest solicitud) {
+            @PathVariable @Positive Integer id, @Valid @RequestBody LineaRequest solicitud) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(presupuestoService.anadirLinea(id, solicitud));
     }
@@ -104,8 +105,8 @@ public class PresupuestoController {
             @ApiResponse(responseCode = "409", description = "El presupuesto no es editable")
     })
     public LineaCreadaResponse modificarLinea(
-            @PathVariable Integer id,
-            @PathVariable Integer lineaId,
+            @PathVariable @Positive Integer id,
+            @PathVariable @Positive Integer lineaId,
             @Valid @RequestBody LineaRequest solicitud) {
         return presupuestoService.modificarLinea(id, lineaId, solicitud);
     }
@@ -120,7 +121,7 @@ public class PresupuestoController {
             @ApiResponse(responseCode = "409", description = "El presupuesto no es editable")
     })
     public TotalesResponse eliminarLinea(
-            @PathVariable Integer id, @PathVariable Integer lineaId) {
+            @PathVariable @Positive Integer id, @PathVariable @Positive Integer lineaId) {
         return presupuestoService.eliminarLinea(id, lineaId);
     }
 
@@ -133,7 +134,7 @@ public class PresupuestoController {
             @ApiResponse(responseCode = "404", description = "Presupuesto no encontrado"),
             @ApiResponse(responseCode = "409", description = "El presupuesto no se puede enviar")
     })
-    public PresupuestoResponse enviar(@PathVariable Integer id) {
+    public PresupuestoResponse enviar(@PathVariable @Positive Integer id) {
         return presupuestoService.enviar(id);
     }
 
@@ -146,7 +147,7 @@ public class PresupuestoController {
             @ApiResponse(responseCode = "404", description = "Presupuesto no encontrado"),
             @ApiResponse(responseCode = "409", description = "El presupuesto no está enviado")
     })
-    public PresupuestoResponse autorizar(@PathVariable Integer id) {
+    public PresupuestoResponse autorizar(@PathVariable @Positive Integer id) {
         return presupuestoService.autorizar(id);
     }
 
@@ -160,7 +161,7 @@ public class PresupuestoController {
             @ApiResponse(responseCode = "409", description = "El presupuesto no está enviado")
     })
     public PresupuestoResponse rechazar(
-            @PathVariable Integer id, @Valid @RequestBody RechazoRequest solicitud) {
+            @PathVariable @Positive Integer id, @Valid @RequestBody RechazoRequest solicitud) {
         return presupuestoService.rechazar(id, solicitud);
     }
 }

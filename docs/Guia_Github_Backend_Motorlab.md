@@ -358,7 +358,8 @@ winpty psql -U postgres
 ```
 
 ```sql
-CREATE USER motorlab_usr WITH PASSWORD 'motorlab_usr';
+CREATE USER motorlab_usr;
+\password motorlab_usr
 CREATE DATABASE motorlabdb      OWNER motorlab_usr ENCODING 'UTF8' TEMPLATE template0;
 CREATE DATABASE motorlab_testdb OWNER motorlab_usr ENCODING 'UTF8' TEMPLATE template0;
 \l
@@ -523,7 +524,7 @@ En el paquete com.motorlab.config crea:
 Defineix les variables d'entorn a Git Bash (valen només mentre el terminal estiga obert) i arranca:
 
 ```bash
-export DB_USER=motorlab_usr DB_PASS=motorlab_usr
+export DB_USER=motorlab_usr DB_PASS="<contraseña-definida-localmente>"
 export JWT_SECRET="$(openssl rand -base64 48)"
 ./mvnw spring-boot:run
 ```
@@ -544,7 +545,7 @@ Si arranques des del botó *Run* de VS Code, les variables de Git Bash **no** s'
       "projectName": "motorlab-backend",
       "env": {
         "DB_USER": "motorlab_usr",
-        "DB_PASS": "motorlab_usr",
+        "DB_PASS": "<contraseña-definida-localmente>",
         "JWT_SECRET": "un_text_llarg_i_aleatori_de_mes_de_32_caracters",
         "SPRING_PROFILES_ACTIVE": "local"
       }
@@ -1033,7 +1034,7 @@ En src/test/java/com/motorlab crea:
 ### Comprovació
 
 ```bash
-export DB_USER=motorlab_usr DB_PASS=motorlab_usr
+export DB_USER=motorlab_usr DB_PASS="<contraseña-definida-localmente>"
 ./mvnw test
 ```
 La prova ha de passar en verd. Si falla amb errors de mapatge, usa el Prompt de correcció amb l'error complet.
@@ -1241,7 +1242,7 @@ Crea:
 ### Comprovació
 
 ```bash
-export DB_USER=motorlab_usr DB_PASS=motorlab_usr
+export DB_USER=motorlab_usr DB_PASS="<contraseña-definida-localmente>"
 export JWT_SECRET="$(openssl rand -base64 48)"
 ./mvnw spring-boot:run
 ```
@@ -1377,7 +1378,7 @@ En src/test/java/com/motorlab crea (ambas extienden IntegracionBase o usan @Spri
 ### Comprovació
 
 ```bash
-export DB_USER=motorlab_usr DB_PASS=motorlab_usr
+export DB_USER=motorlab_usr DB_PASS="<contraseña-definida-localmente>"
 ./mvnw test
 ```
 Després arranca l'aplicació i prova el registre i el login des de Swagger (`http://localhost:8080/swagger-ui.html`).
@@ -1494,7 +1495,7 @@ Los usuarios de ejemplo de docs/motorlab_schema.sql tienen password_hash = 'REEM
 Crea `src/main/resources/application-local.properties` (ja està al `.gitignore`):
 
 ```properties
-app.dev.password-semilla=MotorLab2026!
+app.dev.password-semilla=${DEV_PASSWORD_SEMILLA}
 ```
 
 I arranca amb el perfil activat:
@@ -3267,7 +3268,7 @@ Després de la revisió, **aplica les correccions** que et propose l'assistent (
 ### Comprovació
 
 ```bash
-export DB_USER=motorlab_usr DB_PASS=motorlab_usr
+export DB_USER=motorlab_usr DB_PASS="<contraseña-definida-localmente>"
 ./mvnw clean verify
 git grep -n -i "password\|secret" -- ':!*.md' ':!*.sql'
 ```

@@ -30,6 +30,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 
 @RestController
 @Validated
@@ -65,7 +69,7 @@ public class OrdenController {
             @ApiResponse(responseCode = "404", description = "Orden no encontrada")
     })
     public OrdenDetalleResponse asignar(
-            @PathVariable Integer id,
+            @PathVariable @Positive Integer id,
             @Valid @RequestBody AsignacionRequest solicitud) {
         return ordenService.asignar(id, solicitud);
     }
@@ -80,7 +84,7 @@ public class OrdenController {
             @ApiResponse(responseCode = "409", description = "Transición no permitida o stock insuficiente")
     })
     public OrdenDetalleResponse cambiarEstado(
-            @PathVariable Integer id,
+            @PathVariable @Positive Integer id,
             @Valid @RequestBody CambioEstadoRequest solicitud) {
         return ordenService.cambiarEstado(id, solicitud);
     }
@@ -94,7 +98,7 @@ public class OrdenController {
             @ApiResponse(responseCode = "404", description = "Orden no encontrada"),
             @ApiResponse(responseCode = "409", description = "La orden no se puede cancelar en su estado actual")
     })
-    public OrdenDetalleResponse cancelar(@PathVariable Integer id) {
+    public OrdenDetalleResponse cancelar(@PathVariable @Positive Integer id) {
         return ordenService.cancelar(id);
     }
 
@@ -107,10 +111,10 @@ public class OrdenController {
     public PageResponse<OrdenResumenResponse> listar(
             @RequestParam(required = false) EstadoOrden estado,
             @RequestParam(required = false) Urgencia urgencia,
-            @RequestParam(required = false) Integer mecanicoId,
-            @RequestParam(required = false) String q,
-            @RequestParam(required = false) Integer pagina,
-            @RequestParam(required = false) Integer limite) {
+            @RequestParam(required = false) @Positive Integer mecanicoId,
+            @RequestParam(required = false) @Size(max = 120) String q,
+            @RequestParam(required = false) @Positive Integer pagina,
+            @RequestParam(required = false) @Min(1) @Max(100) Integer limite) {
         return ordenService.listar(estado, urgencia, mecanicoId, q, pagina, limite);
     }
 
@@ -121,7 +125,7 @@ public class OrdenController {
             @ApiResponse(responseCode = "403", description = "Rol no autorizado"),
             @ApiResponse(responseCode = "404", description = "Orden no encontrada")
     })
-    public OrdenDetalleResponse obtener(@PathVariable Integer id) {
+    public OrdenDetalleResponse obtener(@PathVariable @Positive Integer id) {
         return ordenService.obtener(id);
     }
 
@@ -132,7 +136,7 @@ public class OrdenController {
             @ApiResponse(responseCode = "403", description = "Rol no autorizado"),
             @ApiResponse(responseCode = "404", description = "Orden no encontrada")
     })
-    public SeguimientoResponse seguimiento(@PathVariable Integer id) {
+    public SeguimientoResponse seguimiento(@PathVariable @Positive Integer id) {
         return ordenService.seguimiento(id);
     }
 }

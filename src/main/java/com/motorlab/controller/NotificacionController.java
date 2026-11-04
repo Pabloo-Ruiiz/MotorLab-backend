@@ -20,6 +20,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 
 @RestController
 @Validated
@@ -42,8 +45,8 @@ public class NotificacionController {
     })
     public PageResponse<NotificacionResponse> listar(
             @RequestParam(required = false) Boolean leida,
-            @RequestParam(required = false) Integer pagina,
-            @RequestParam(required = false) Integer limite) {
+            @RequestParam(required = false) @Positive Integer pagina,
+            @RequestParam(required = false) @Min(1) @Max(100) Integer limite) {
         return notificacionService.listar(leida, pagina, limite);
     }
 
@@ -54,7 +57,7 @@ public class NotificacionController {
             @ApiResponse(responseCode = "403", description = "Rol no autorizado"),
             @ApiResponse(responseCode = "404", description = "Notificación no encontrada")
     })
-    public NotificacionResponse marcarLeida(@PathVariable Integer id) {
+    public NotificacionResponse marcarLeida(@PathVariable @Positive Integer id) {
         return notificacionService.marcarLeida(id);
     }
 

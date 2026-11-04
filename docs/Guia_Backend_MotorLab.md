@@ -151,7 +151,7 @@ springdoc.swagger-ui.path=/swagger-ui.html
 Les variables d'entorn les defineixes a Git Bash abans d'arrancar (valen només mentre el terminal estiga obert):
 
 ```bash
-export DB_USER=motorlab_usr DB_PASS=motorlab_usr
+export DB_USER=motorlab_usr DB_PASS="<contraseña-definida-localmente>"
 export JWT_SECRET="$(openssl rand -base64 48)"
 ./mvnw spring-boot:run
 ```
@@ -170,7 +170,7 @@ Si arranques des del botó *Run* de VS Code en lloc del terminal, aquestes varia
       "projectName": "motorlab-backend",
       "env": {
         "DB_USER": "motorlab_usr",
-        "DB_PASS": "motorlab_usr",
+        "DB_PASS": "<contraseña-definida-localmente>",
         "JWT_SECRET": "un_text_llarg_i_aleatori_de_mes_de_32_caracters",
         "SPRING_PROFILES_ACTIVE": "local"
       }
@@ -207,7 +207,7 @@ Paquete com.motorlab.exception:
 **Comprovació**
 
 ```bash
-export DB_USER=motorlab_usr DB_PASS=motorlab_usr JWT_SECRET="$(openssl rand -base64 48)"
+export DB_USER=motorlab_usr DB_PASS="<contraseña-definida-localmente>" JWT_SECRET="$(openssl rand -base64 48)"
 ./mvnw spring-boot:run
 ```
 
@@ -333,7 +333,7 @@ En src/test/java/com/motorlab crea:
 **Comprovació**
 
 ```bash
-export DB_USER=motorlab_usr DB_PASS=motorlab_usr
+export DB_USER=motorlab_usr DB_PASS="<contraseña-definida-localmente>"
 ./mvnw test
 ```
 
@@ -419,7 +419,7 @@ Implementa la sección 4.7 de docs/motorlab_api.md (solo usuarios, sin el panel)
 Los usuarios de ejemplo de docs/motorlab_schema.sql tienen password_hash = 'REEMPLAZAR_POR_HASH_BCRYPT'. Crea config.InicializadorUsuarios, un CommandLineRunner con @Profile("local") y @Transactional que, al arrancar, busque los usuarios con ese valor y les ponga como contraseña el valor de la propiedad app.dev.password-semilla cifrado con BCrypt, registrando en el log cuáles ha actualizado. Explícame cómo activar el perfil "local" y dime qué contiene el archivo src/main/resources/application-local.properties (que NO se sube a Git).
 ```
 
-Crea `application-local.properties` amb `app.dev.password-semilla=MotorLab2026!` (o la que vulgues) i arranca amb `export SPRING_PROFILES_ACTIVE=local`.
+Crea `application-local.properties` amb `app.dev.password-semilla=${DEV_PASSWORD_SEMILLA}` i defineix `export DEV_PASSWORD_SEMILLA="$(openssl rand -base64 24)"` abans d'arrancar amb `export SPRING_PROFILES_ACTIVE=local`.
 
 #### Prompt 5.7 · Pruebas de seguridad
 
@@ -746,7 +746,7 @@ Crea security.LimiteIntentosLoginFilter (OncePerRequestFilter) que limite POST /
 **Comprovació final**
 
 ```bash
-export DB_USER=motorlab_usr DB_PASS=motorlab_usr
+export DB_USER=motorlab_usr DB_PASS="<contraseña-definida-localmente>"
 ./mvnw clean verify
 ```
 

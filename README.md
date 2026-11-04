@@ -14,7 +14,11 @@ La aplicación usa Spring Boot, Spring Web, Spring Data JPA, Spring Security con
 Desde Git Bash, crea el usuario y las dos bases de datos conectándote con un usuario administrador de PostgreSQL:
 
 ```bash
-winpty psql -U postgres -d postgres -c "CREATE USER motorlab_usr WITH PASSWORD 'motorlab_usr';"
+winpty psql -U postgres -d postgres -c "CREATE USER motorlab_usr;"
+winpty psql -U postgres -d postgres
+# Dentro de psql:
+\password motorlab_usr
+\q
 winpty psql -U postgres -d postgres -c "CREATE DATABASE motorlabdb OWNER motorlab_usr ENCODING 'UTF8' TEMPLATE template0;"
 winpty psql -U postgres -d postgres -c "CREATE DATABASE motorlab_testdb OWNER motorlab_usr ENCODING 'UTF8' TEMPLATE template0;"
 ```
@@ -38,6 +42,7 @@ La aplicación necesita estas variables:
 | `DB_PASS` | Contraseña de `motorlab_usr`. |
 | `JWT_SECRET` | Secreto JWT largo y aleatorio (más de 32 caracteres). |
 | `SPRING_PROFILES_ACTIVE` | Perfil de Spring; usa `local` para inicializar la contraseña de los usuarios de ejemplo. |
+| `DEV_PASSWORD_SEMILLA` | Contraseña temporal definida solo en desarrollo para los usuarios de ejemplo. |
 
 ### Git Bash
 
@@ -45,9 +50,10 @@ Define las variables en la terminal antes de arrancar la aplicación. Solo estar
 
 ```bash
 export DB_USER=motorlab_usr
-export DB_PASS=motorlab_usr
+export DB_PASS="<contraseña-definida-para-motorlab_usr>"
 export JWT_SECRET="$(openssl rand -base64 48)"
 export SPRING_PROFILES_ACTIVE=local
+export DEV_PASSWORD_SEMILLA="$(openssl rand -base64 24)"
 ```
 
 ### VS Code
@@ -66,9 +72,10 @@ Para arrancar desde el depurador de VS Code, crea `.vscode/launch.json` (este ar
       "projectName": "motorlab-backend",
       "env": {
         "DB_USER": "motorlab_usr",
-        "DB_PASS": "motorlab_usr",
+        "DB_PASS": "contraseña-definida-para-motorlab_usr",
         "JWT_SECRET": "sustituye-este-valor-por-un-secreto-largo-y-aleatorio",
-        "SPRING_PROFILES_ACTIVE": "local"
+        "SPRING_PROFILES_ACTIVE": "local",
+        "DEV_PASSWORD_SEMILLA": "sustituye-este-valor-por-una-contraseña-temporal"
       }
     }
   ]
@@ -91,7 +98,7 @@ Los tests de integración utilizan la base de datos independiente `motorlab_test
 
 ```bash
 export DB_USER=motorlab_usr
-export DB_PASS=motorlab_usr
+export DB_PASS="<contraseña-definida-para-motorlab_usr>"
 ./mvnw test
 ```
 
@@ -107,13 +114,13 @@ La especificación OpenAPI se puede consultar en <http://localhost:8080/v3/api-d
 
 El script SQL crea estos usuarios:
 
-| Rol | Email | Contraseña local |
+| Rol | Email |
 |---|---|---|
-| Administrador | `admin@taller.example` | `MotorLab2026!` |
-| Mecánico | `javi@taller.example` | `MotorLab2026!` |
-| Cliente | `laura@cliente.example` | `MotorLab2026!` |
+| Administrador | `admin@taller.example` |
+| Mecánico | `javi@taller.example` |
+| Cliente | `laura@cliente.example` |
 
-La contraseña se genera a partir de `app.dev.password-semilla` cuando se arranca con el perfil `local`; no se almacena en claro en la base de datos.
+Al arrancar con el perfil `local`, la contraseña temporal se toma de `DEV_PASSWORD_SEMILLA`; no se almacena en claro en la base de datos. Usa esa misma variable para iniciar sesión durante el desarrollo.
 
 ## Estructura de paquetes
 

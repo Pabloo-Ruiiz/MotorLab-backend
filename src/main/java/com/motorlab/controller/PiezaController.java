@@ -26,6 +26,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 
 @RestController
 @Validated
@@ -47,11 +51,11 @@ public class PiezaController {
             @ApiResponse(responseCode = "403", description = "Rol no autorizado")
     })
     public PageResponse<PiezaResponse> listar(
-            @RequestParam(required = false) String q,
+            @RequestParam(required = false) @Size(max = 120) String q,
             @RequestParam(defaultValue = "true") boolean soloActivas,
             @RequestParam(defaultValue = "false") boolean stockBajo,
-            @RequestParam(required = false) Integer pagina,
-            @RequestParam(required = false) Integer limite) {
+            @RequestParam(required = false) @Positive Integer pagina,
+            @RequestParam(required = false) @Min(1) @Max(100) Integer limite) {
         return piezaService.listar(q, soloActivas, stockBajo, pagina, limite);
     }
 
@@ -62,7 +66,7 @@ public class PiezaController {
             @ApiResponse(responseCode = "403", description = "Rol no autorizado"),
             @ApiResponse(responseCode = "404", description = "Pieza no encontrada")
     })
-    public PiezaResponse obtener(@PathVariable Integer id) {
+    public PiezaResponse obtener(@PathVariable @Positive Integer id) {
         return piezaService.obtener(id);
     }
 
@@ -88,7 +92,7 @@ public class PiezaController {
             @ApiResponse(responseCode = "409", description = "La referencia ya está registrada")
     })
     public PiezaResponse actualizar(
-            @PathVariable Integer id,
+            @PathVariable @Positive Integer id,
             @Valid @RequestBody PiezaRequest solicitud) {
         return piezaService.actualizar(id, solicitud);
     }
@@ -102,7 +106,7 @@ public class PiezaController {
             @ApiResponse(responseCode = "404", description = "Pieza no encontrada"),
             @ApiResponse(responseCode = "409", description = "La pieza aparece en presupuestos")
     })
-    public ResponseEntity<Void> darDeBaja(@PathVariable Integer id) {
+    public ResponseEntity<Void> darDeBaja(@PathVariable @Positive Integer id) {
         piezaService.darDeBaja(id);
         return ResponseEntity.noContent().build();
     }
@@ -117,7 +121,7 @@ public class PiezaController {
             @ApiResponse(responseCode = "409", description = "El stock resultante no puede ser negativo")
     })
     public PiezaResponse ajustarStock(
-            @PathVariable Integer id,
+            @PathVariable @Positive Integer id,
             @Valid @RequestBody StockDeltaRequest solicitud) {
         return piezaService.ajustarStock(id, solicitud.delta(), solicitud.motivo());
     }

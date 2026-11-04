@@ -26,6 +26,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 
 @RestController
 @Validated
@@ -48,8 +51,8 @@ public class UsuarioController {
     })
     public PageResponse<UsuarioResponse> listar(
             @RequestParam(required = false) Rol rol,
-            @RequestParam(required = false) Integer pagina,
-            @RequestParam(required = false) Integer limite) {
+            @RequestParam(required = false) @Positive Integer pagina,
+            @RequestParam(required = false) @Min(1) @Max(100) Integer limite) {
         return usuarioService.listar(rol, pagina, limite);
     }
 
@@ -73,7 +76,7 @@ public class UsuarioController {
             @ApiResponse(responseCode = "409", description = "El cambio entra en conflicto con los datos existentes")
     })
     public UsuarioResponse actualizar(
-            @PathVariable Integer id,
+            @PathVariable @Positive Integer id,
             @Valid @RequestBody UsuarioUpdateRequest solicitud) {
         return usuarioService.actualizar(id, solicitud);
     }
