@@ -208,6 +208,10 @@ class OrdenControllerTest {
 
     private String tokenDe(Usuario usuario) throws Exception {
         MvcResult resultado = mockMvc.perform(post("/api/v1/auth/login")
+                        .with(peticion -> {
+                            peticion.setRemoteAddr(usuario.getEmail());
+                            return peticion;
+                        })
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsBytes(
                                 new LoginRequest(usuario.getEmail(), PASSWORD))))

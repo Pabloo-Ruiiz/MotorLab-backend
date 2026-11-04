@@ -21,6 +21,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.motorlab.security.JwtAuthenticationFilter;
+import com.motorlab.security.LimiteIntentosLoginFilter;
 import com.motorlab.security.RestAccessDeniedHandler;
 import com.motorlab.security.RestAuthenticationEntryPoint;
 
@@ -30,14 +31,17 @@ import com.motorlab.security.RestAuthenticationEntryPoint;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter filtroJwt;
+    private final LimiteIntentosLoginFilter filtroLimiteIntentosLogin;
     private final RestAuthenticationEntryPoint puntoEntrada;
     private final RestAccessDeniedHandler manejadorAccesoDenegado;
 
     public SecurityConfig(
             JwtAuthenticationFilter filtroJwt,
+            LimiteIntentosLoginFilter filtroLimiteIntentosLogin,
             RestAuthenticationEntryPoint puntoEntrada,
             RestAccessDeniedHandler manejadorAccesoDenegado) {
         this.filtroJwt = filtroJwt;
+        this.filtroLimiteIntentosLogin = filtroLimiteIntentosLogin;
         this.puntoEntrada = puntoEntrada;
         this.manejadorAccesoDenegado = manejadorAccesoDenegado;
     }
@@ -59,7 +63,8 @@ public class SecurityConfig {
                                 "/v3/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
                         .anyRequest().authenticated())
-                .addFilterBefore(filtroJwt, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(filtroJwt, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(filtroLimiteIntentosLogin, JwtAuthenticationFilter.class);
         return http.build();
     }
 

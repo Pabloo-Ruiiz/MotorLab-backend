@@ -103,6 +103,35 @@ class AuthControllerTest extends IntegracionBase {
     }
 
     @Test
+    void sextoIntentoDeLoginDevuelve429() throws Exception {
+        LoginRequest solicitud = new LoginRequest(
+                "usuario-inexistente-" + UUID.randomUUID() + "@example.com",
+                "ClaveIncorrecta123");
+        String ip = "198.51.100.10";
+
+        for (int intento = 1; intento <= 5; intento++) {
+            mockMvc.perform(post("/api/v1/auth/login")
+                            .with(peticion -> {
+                                peticion.setRemoteAddr(ip);
+                                return peticion;
+                            })
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsBytes(solicitud)))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .with(peticion -> {
+                            peticion.setRemoteAddr(ip);
+                            return peticion;
+                        })
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(solicitud)))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.error.codigo").value("DEMASIADOS_INTENTOS"));
+    }
+
+    @Test
     void yoSinTokenDevuelve401() throws Exception {
         mockMvc.perform(get("/api/v1/auth/yo"))
                 .andExpect(status().isUnauthorized());
