@@ -25,6 +25,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 
 @RestController
 @Validated
@@ -46,8 +49,8 @@ public class VehiculoController {
             @ApiResponse(responseCode = "403", description = "Rol no autorizado")
     })
     public PageResponse<VehiculoResponse> listar(
-            @RequestParam(required = false) Integer pagina,
-            @RequestParam(required = false) Integer limite) {
+            @RequestParam(required = false) @Positive Integer pagina,
+            @RequestParam(required = false) @Min(1) @Max(100) Integer limite) {
         return vehiculoService.listar(pagina, limite);
     }
 
@@ -69,7 +72,7 @@ public class VehiculoController {
             @ApiResponse(responseCode = "403", description = "Rol no autorizado"),
             @ApiResponse(responseCode = "404", description = "Vehículo no encontrado")
     })
-    public VehiculoResponse obtener(@PathVariable Integer id) {
+    public VehiculoResponse obtener(@PathVariable @Positive Integer id) {
         return vehiculoService.obtener(id);
     }
 
@@ -81,9 +84,9 @@ public class VehiculoController {
             @ApiResponse(responseCode = "404", description = "Vehículo no encontrado")
     })
     public PageResponse<OrdenResumenResponse> historial(
-            @PathVariable Integer id,
-            @RequestParam(required = false) Integer pagina,
-            @RequestParam(required = false) Integer limite) {
+            @PathVariable @Positive Integer id,
+            @RequestParam(required = false) @Positive Integer pagina,
+            @RequestParam(required = false) @Min(1) @Max(100) Integer limite) {
         return vehiculoService.historial(id, pagina, limite);
     }
 
@@ -96,7 +99,7 @@ public class VehiculoController {
             @ApiResponse(responseCode = "409", description = "La matrícula ya está registrada")
     })
     public VehiculoResponse actualizar(
-            @PathVariable Integer id,
+            @PathVariable @Positive Integer id,
             @Valid @RequestBody VehiculoRequest solicitud) {
         return vehiculoService.actualizar(id, solicitud);
     }
@@ -109,7 +112,7 @@ public class VehiculoController {
             @ApiResponse(responseCode = "404", description = "Vehículo no encontrado"),
             @ApiResponse(responseCode = "409", description = "El vehículo tiene órdenes abiertas")
     })
-    public ResponseEntity<Void> darDeBaja(@PathVariable Integer id) {
+    public ResponseEntity<Void> darDeBaja(@PathVariable @Positive Integer id) {
         vehiculoService.darDeBaja(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }

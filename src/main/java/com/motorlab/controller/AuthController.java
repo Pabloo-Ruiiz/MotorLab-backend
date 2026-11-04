@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import com.motorlab.dto.auth.LoginRequest;
 import com.motorlab.dto.auth.LoginResponse;
@@ -52,6 +53,7 @@ public class AuthController {
     }
 
     @GetMapping("/yo")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Consultar el usuario autenticado")
     @ApiResponses({
             @ApiResponse(responseCode = "401", description = "Autenticación requerida")
