@@ -261,13 +261,13 @@ public class PresupuestoService {
             detalles.add(new ErrorDetalle("tipo", "El tipo es obligatorio"));
         } else if (solicitud.tipo() == TipoLinea.pieza) {
             if (solicitud.piezaId() == null) {
-                detalles.add(new ErrorDetalle("pieza_id", "La pieza es obligatoria para una línea de pieza"));
+                detalles.add(new ErrorDetalle("piezaId", "La pieza es obligatoria para una línea de pieza"));
             } else {
                 Pieza pieza = piezaRepository.findById(solicitud.piezaId())
                         .filter(Pieza::isActiva)
                         .orElse(null);
                 if (pieza == null) {
-                    detalles.add(new ErrorDetalle("pieza_id", "La pieza no existe o no está activa"));
+                    detalles.add(new ErrorDetalle("piezaId", "La pieza no existe o no está activa"));
                 } else {
                     linea.setPieza(pieza);
                     linea.setConcepto(pieza.getNombre());
@@ -280,7 +280,7 @@ public class PresupuestoService {
             }
         } else if (solicitud.tipo() == TipoLinea.mano_obra) {
             if (solicitud.piezaId() != null) {
-                detalles.add(new ErrorDetalle("pieza_id", "La mano de obra no puede tener pieza"));
+                detalles.add(new ErrorDetalle("piezaId", "La mano de obra no puede tener pieza"));
             }
             if (solicitud.concepto() == null || solicitud.concepto().isBlank()) {
                 detalles.add(new ErrorDetalle("concepto", "El concepto es obligatorio para mano de obra"));
@@ -290,7 +290,7 @@ public class PresupuestoService {
             if (solicitud.precioUnitario() == null
                     || solicitud.precioUnitario().compareTo(BigDecimal.ZERO) < 0) {
                 detalles.add(new ErrorDetalle(
-                        "precio_unitario", "El precio unitario es obligatorio y no puede ser negativo"));
+                        "precioUnitario", "El precio unitario es obligatorio y no puede ser negativo"));
             } else {
                 linea.setPrecioUnitario(solicitud.precioUnitario());
             }

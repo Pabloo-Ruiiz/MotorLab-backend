@@ -56,6 +56,38 @@ export SPRING_PROFILES_ACTIVE=local
 export DEV_PASSWORD_SEMILLA="$(openssl rand -base64 24)"
 ```
 
+Después, con PostgreSQL iniciado y la base de datos `motorlabdb` creada mediante
+[`docs/motorlab_schema.sql`](docs/motorlab_schema.sql), arranca la aplicación:
+
+```bash
+./mvnw spring-boot:run
+```
+
+### PowerShell
+
+En Windows, define las variables en la misma terminal desde la que arrancarás la
+aplicación:
+
+```powershell
+$env:DB_USER="motorlab_usr"
+$env:DB_PASS="<contraseña-definida-para-motorlab_usr>"
+$env:JWT_SECRET="<secreto-largo-y-aleatorio-de-al-menos-32-caracteres>"
+$env:SPRING_PROFILES_ACTIVE="local"
+$env:DEV_PASSWORD_SEMILLA="<contraseña-temporal-para-los-usuarios-de-ejemplo>"
+```
+
+Con PostgreSQL iniciado y la base de datos `motorlabdb` preparada, ejecuta:
+
+```powershell
+.\mvnw.cmd spring-boot:run
+```
+
+`DEV_PASSWORD_SEMILLA` es obligatoria cuando se activa el perfil `local`. El
+componente `InicializadorUsuarios` utiliza su valor para cifrar con BCrypt la
+contraseña de los usuarios de ejemplo cuyo `password_hash` todavía contiene
+`REEMPLAZAR_POR_HASH_BCRYPT`. La variable solo permanece definida en la sesión
+actual de PowerShell.
+
 ### VS Code
 
 Para arrancar desde el depurador de VS Code, crea `.vscode/launch.json` (este archivo debe mantenerse fuera del control de versiones si contiene credenciales):
@@ -82,13 +114,17 @@ Para arrancar desde el depurador de VS Code, crea `.vscode/launch.json` (este ar
 }
 ```
 
-## Arrancar la aplicación
+## Comprobar el arranque
 
-Con PostgreSQL iniciado y las variables definidas:
+Si el arranque es correcto, Spring Boot mostrará el mensaje `Started
+MotorlabBackendApplication`. La documentación interactiva estará disponible en:
 
-```bash
-./mvnw spring-boot:run
+```text
+http://localhost:8080/swagger-ui.html
 ```
+
+Para iniciar sesión durante el desarrollo, utiliza como contraseña la misma que
+definiste en `DEV_PASSWORD_SEMILLA`.
 
 La API estará disponible en `http://localhost:8080/api/v1`.
 

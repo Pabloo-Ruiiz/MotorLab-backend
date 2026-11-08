@@ -1,7 +1,6 @@
 package com.motorlab.exception;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 
 import jakarta.validation.ConstraintViolation;
@@ -36,7 +35,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> manejarArgumentoNoValido(MethodArgumentNotValidException excepcion) {
         List<ErrorDetalle> detalles = excepcion.getBindingResult().getFieldErrors().stream()
-                .map(error -> new ErrorDetalle(aSnakeCase(error.getField()), error.getDefaultMessage()))
+                .map(error -> new ErrorDetalle(error.getField(), error.getDefaultMessage()))
                 .toList();
         return respuesta(HttpStatus.BAD_REQUEST, "VALIDACION", "Hay campos con errores", detalles);
     }
@@ -84,24 +83,12 @@ public class GlobalExceptionHandler {
     private ErrorDetalle convertirViolacion(ConstraintViolation<?> violacion) {
         String campo = violacion.getPropertyPath() == null
                 ? "general"
-                : aSnakeCase(violacion.getPropertyPath().toString());
+                : violacion.getPropertyPath().toString();
         return new ErrorDetalle(campo, Objects.requireNonNullElse(violacion.getMessage(), "Valor no válido"));
     }
 
     private ResponseEntity<ErrorResponse> respuesta(
             HttpStatus estado, String codigo, String mensaje, List<ErrorDetalle> detalles) {
         return ResponseEntity.status(estado).body(ErrorResponse.de(codigo, mensaje, detalles));
-    }
-
-    private String aSnakeCase(String valor) {
-        String[] segmentos = valor.split("\\.");
-        return java.util.Arrays.stream(segmentos)
-                .map(this::convertirSegmento)
-                .reduce((primero, segundo) -> primero + "." + segundo)
-                .orElse(valor.toLowerCase(Locale.ROOT));
-    }
-
-    private String convertirSegmento(String segmento) {
-        return segmento.replaceAll("([a-z0-9])([A-Z])", "$1_$2").toLowerCase(Locale.ROOT);
     }
 }

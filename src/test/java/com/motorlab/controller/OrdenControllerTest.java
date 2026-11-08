@@ -105,7 +105,7 @@ class OrdenControllerTest {
                 .andExpect(jsonPath("$.error.codigo").value("VALIDACION"))
                 .andExpect(jsonPath("$.error.detalles", hasSize(2)))
                 .andExpect(jsonPath("$.error.detalles[*].campo", hasItem("sintoma")))
-                .andExpect(jsonPath("$.error.detalles[*].campo", hasItem("fecha_preferida")));
+                .andExpect(jsonPath("$.error.detalles[*].campo", hasItem("fechaPreferida")));
     }
 
     @Test
@@ -138,7 +138,7 @@ class OrdenControllerTest {
                         .header("Authorization", "Bearer " + tokenDe(clienteA)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.datos", hasSize(1)))
-                .andExpect(jsonPath("$.datos[0].cliente_nombre").value("Cliente A"));
+                .andExpect(jsonPath("$.datos[0].clienteNombre").value("Cliente A"));
     }
 
     @Test

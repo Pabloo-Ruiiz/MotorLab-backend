@@ -73,7 +73,7 @@ class AuthControllerTest extends IntegracionBase {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error.codigo").value("VALIDACION"))
                 .andExpect(jsonPath("$.error.detalles", hasSize(1)))
-                .andExpect(jsonPath("$.error.detalles[0].campo").value("acepta_privacidad"));
+                .andExpect(jsonPath("$.error.detalles[0].campo").value("aceptaPrivacidad"));
     }
 
     @Test
