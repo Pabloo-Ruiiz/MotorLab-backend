@@ -42,9 +42,13 @@ CREATE TABLE usuarios (
   password_hash      VARCHAR(255) NOT NULL,                 -- hash bcrypt, nunca la contraseña
   rol                VARCHAR(10)  NOT NULL DEFAULT 'cliente',
   activo             BOOLEAN      NOT NULL DEFAULT TRUE,    -- baja lógica
+  email_verificado   BOOLEAN      NOT NULL DEFAULT TRUE,
+  token_verificacion_hash   VARCHAR(64),                    -- SHA-256, nunca el token
+  token_verificacion_expira TIMESTAMP,
   consentimiento_en  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,  -- RGPD
   creado_en          TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT uq_usuarios_email UNIQUE (email),
+  CONSTRAINT uq_usuarios_token_verificacion UNIQUE (token_verificacion_hash),
   CONSTRAINT ck_usuarios_rol   CHECK (rol IN ('cliente', 'mecanico', 'admin'))
 );
 

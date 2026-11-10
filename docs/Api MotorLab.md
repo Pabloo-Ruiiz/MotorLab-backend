@@ -127,7 +127,9 @@ solicitud_recibida ──► pendiente_presupuesto ──► presupuesto_enviado
 | Método | Ruta | Acceso | Descripción |
 |---|---|---|---|
 | `POST` | `/auth/registro` | público | Crea una cuenta de **cliente** |
-| `POST` | `/auth/login` | público | Devuelve el token JWT |
+| `POST` | `/auth/login` | público | Devuelve el token JWT. `403 EMAIL_NO_VERIFICADO` si falta confirmar el correo |
+| `POST` | `/auth/verificar-email` | público | Confirma el correo con `{ "token" }`. `204`, o `400 TOKEN_INVALIDO` |
+| `POST` | `/auth/reenviar-verificacion` | público | Reenvía el correo con `{ "email" }`. Siempre `204` |
 | `GET` | `/auth/yo` | autenticado | Datos del usuario del token |
 
 **`POST /auth/registro`**

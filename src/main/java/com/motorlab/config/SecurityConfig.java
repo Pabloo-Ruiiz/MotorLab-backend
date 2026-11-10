@@ -56,12 +56,35 @@ public class SecurityConfig {
                         .authenticationEntryPoint(puntoEntrada)
                         .accessDeniedHandler(manejadorAccesoDenegado))
                 .authorizeHttpRequests(autorizacion -> autorizacion
-                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/registro", "/api/v1/auth/login").permitAll()
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/v1/auth/registro",
+                                "/api/v1/auth/login",
+                                "/api/v1/auth/verificar-email",
+                                "/api/v1/auth/reenviar-verificacion").permitAll()
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
+                        // Frontend Angular: archivos estáticos y rutas que resuelve el navegador
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/",
+                                "/index.html",
+                                "/*.js",
+                                "/*.css",
+                                "/*.ico",
+                                "/*.svg",
+                                "/assets/**",
+                                "/media/**",
+                                "/cliente/**",
+                                "/taller/**",
+                                "/login",
+                                "/registro",
+                                "/verificar-correo",
+                                "/403",
+                                "/404").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(filtroJwt, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(filtroLimiteIntentosLogin, JwtAuthenticationFilter.class);

@@ -2,6 +2,7 @@ package com.motorlab.security;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.http.MediaType;
@@ -22,7 +23,9 @@ public class LimiteIntentosLoginFilter extends OncePerRequestFilter {
 
     private static final int MAXIMO_INTENTOS = 5;
     private static final long DURACION_VENTANA_MILLIS = 60_000L;
-    private static final String RUTA_LOGIN = "/api/v1/auth/login";
+    private static final Set<String> RUTAS_LIMITADAS = Set.of(
+            "/api/v1/auth/login",
+            "/api/v1/auth/reenviar-verificacion");
 
     private final ConcurrentHashMap<String, VentanaIntentos> intentosPorIp = new ConcurrentHashMap<>();
     private final ObjectMapper objectMapper;
@@ -36,14 +39,14 @@ public class LimiteIntentosLoginFilter extends OncePerRequestFilter {
             HttpServletRequest peticion,
             HttpServletResponse respuesta,
             FilterChain cadena) throws ServletException, IOException {
-        if (!esLogin(peticion)) {
+        if (!esRutaLimitada(peticion)) {
             cadena.doFilter(peticion, respuesta);
             return;
         }
 
-        String ip = obtenerIp(peticion);
+        String clave = obtenerIp(peticion) + peticion.getRequestURI();
         long ahora = System.currentTimeMillis();
-        VentanaIntentos ventana = intentosPorIp.compute(ip, (clave, anterior) -> {
+        VentanaIntentos ventana = intentosPorIp.compute(clave, (ipYRuta, anterior) -> {
             if (anterior == null || ahora - anterior.inicioMillis >= DURACION_VENTANA_MILLIS) {
                 return new VentanaIntentos(ahora, 1);
             }
@@ -58,9 +61,9 @@ public class LimiteIntentosLoginFilter extends OncePerRequestFilter {
         cadena.doFilter(peticion, respuesta);
     }
 
-    private boolean esLogin(HttpServletRequest peticion) {
+    private boolean esRutaLimitada(HttpServletRequest peticion) {
         return "POST".equalsIgnoreCase(peticion.getMethod())
-                && RUTA_LOGIN.equals(peticion.getRequestURI());
+                && RUTAS_LIMITADAS.contains(peticion.getRequestURI());
     }
 
     private String obtenerIp(HttpServletRequest peticion) {
@@ -73,7 +76,7 @@ public class LimiteIntentosLoginFilter extends OncePerRequestFilter {
         respuesta.setCharacterEncoding("UTF-8");
         ErrorResponse error = ErrorResponse.de(
                 "DEMASIADOS_INTENTOS",
-                "Demasiados intentos de inicio de sesión. Inténtelo de nuevo más tarde.",
+                "Demasiados intentos. Inténtelo de nuevo más tarde.",
                 List.of());
         objectMapper.writeValue(respuesta.getWriter(), error);
     }

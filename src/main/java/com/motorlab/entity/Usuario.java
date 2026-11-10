@@ -40,6 +40,16 @@ public class Usuario {
     @Column(nullable = false)
     private boolean activo = true;
 
+    // Solo el registro público crea cuentas sin verificar
+    @Column(name = "email_verificado", nullable = false)
+    private boolean emailVerificado = true;
+
+    @Column(name = "token_verificacion_hash", length = 64)
+    private String tokenVerificacionHash;
+
+    @Column(name = "token_verificacion_expira")
+    private LocalDateTime tokenVerificacionExpira;
+
     @Column(name = "consentimiento_en", insertable = false, updatable = false)
     private LocalDateTime consentimientoEn;
 
@@ -103,6 +113,30 @@ public class Usuario {
 
     public void setActivo(boolean activo) {
         this.activo = activo;
+    }
+
+    public boolean isEmailVerificado() {
+        return emailVerificado;
+    }
+
+    public void setEmailVerificado(boolean emailVerificado) {
+        this.emailVerificado = emailVerificado;
+    }
+
+    public String getTokenVerificacionHash() {
+        return tokenVerificacionHash;
+    }
+
+    public void setTokenVerificacionHash(String tokenVerificacionHash) {
+        this.tokenVerificacionHash = tokenVerificacionHash;
+    }
+
+    public LocalDateTime getTokenVerificacionExpira() {
+        return tokenVerificacionExpira;
+    }
+
+    public void setTokenVerificacionExpira(LocalDateTime tokenVerificacionExpira) {
+        this.tokenVerificacionExpira = tokenVerificacionExpira;
     }
 
     public LocalDateTime getConsentimientoEn() {
