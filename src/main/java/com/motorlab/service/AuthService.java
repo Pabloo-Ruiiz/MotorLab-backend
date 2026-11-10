@@ -18,6 +18,7 @@ import com.motorlab.dto.usuario.UsuarioResponse;
 import com.motorlab.entity.Usuario;
 import com.motorlab.entity.enums.Rol;
 import com.motorlab.exception.EmailDuplicadoException;
+import com.motorlab.exception.EmailNoVerificadoException;
 import com.motorlab.exception.RecursoNoEncontradoException;
 import com.motorlab.mapper.UsuarioMapper;
 import com.motorlab.repository.UsuarioRepository;
@@ -35,18 +36,21 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final VerificacionEmailService verificacionEmailService;
 
     public AuthService(
             UsuarioRepository usuarioRepository,
             UsuarioMapper usuarioMapper,
             PasswordEncoder passwordEncoder,
             AuthenticationManager authenticationManager,
-            JwtService jwtService) {
+            JwtService jwtService,
+            VerificacionEmailService verificacionEmailService) {
         this.usuarioRepository = usuarioRepository;
         this.usuarioMapper = usuarioMapper;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
+        this.verificacionEmailService = verificacionEmailService;
     }
 
     @Transactional
@@ -63,6 +67,8 @@ public class AuthService {
         usuario.setPasswordHash(passwordEncoder.encode(solicitud.password()));
         usuario.setRol(Rol.cliente);
         usuario.setActivo(true);
+        usuario.setEmailVerificado(false);
+        verificacionEmailService.emitirToken(usuario);
 
         return usuarioMapper.aResponse(usuarioRepository.save(usuario));
     }
@@ -86,6 +92,12 @@ public class AuthService {
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .filter(Usuario::isActivo)
                 .orElseThrow(() -> new BadCredentialsException(MENSAJE_CREDENCIALES));
+
+        // Después de comprobar la contraseña, para no revelar el estado de cuentas ajenas
+        if (!usuario.isEmailVerificado()) {
+            throw new EmailNoVerificadoException();
+        }
+
         return new LoginResponse(jwtService.generarToken(principal), usuarioMapper.aResponse(usuario));
     }
 
@@ -97,7 +109,7 @@ public class AuthService {
                 .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado"));
     }
 
-    private String normalizarEmail(String email) {
+    static String normalizarEmail(String email) {
         return email.trim().toLowerCase(Locale.ROOT);
     }
 }

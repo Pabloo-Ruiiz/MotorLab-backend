@@ -22,6 +22,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.motorlab.dto.auth.LoginRequest;
 import com.motorlab.dto.auth.RegistroRequest;
+import com.motorlab.entity.Usuario;
+import com.motorlab.repository.UsuarioRepository;
 import com.motorlab.support.IntegracionBase;
 
 @AutoConfigureMockMvc
@@ -33,6 +35,25 @@ class AuthControllerTest extends IntegracionBase {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+
+    @Test
+    void loginSinVerificarDevuelve403() throws Exception {
+        RegistroRequest solicitud = registro();
+        mockMvc.perform(post("/api/v1/auth/registro")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(solicitud)))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(
+                                new LoginRequest(solicitud.email(), solicitud.password()))))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.codigo").value("EMAIL_NO_VERIFICADO"));
+    }
 
     @Test
     void registroCorrectoDevuelve201() throws Exception {
@@ -167,6 +188,10 @@ class AuthControllerTest extends IntegracionBase {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsBytes(solicitud)))
                 .andExpect(status().isCreated());
+
+        Usuario usuario = usuarioRepository.findByEmail(solicitud.email()).orElseThrow();
+        usuario.setEmailVerificado(true);
+        usuarioRepository.saveAndFlush(usuario);
     }
 
     private String tokenDe(RegistroRequest solicitud) throws Exception {

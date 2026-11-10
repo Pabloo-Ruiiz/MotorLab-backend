@@ -16,6 +16,8 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
 
     List<Usuario> findByPasswordHash(String passwordHash);
 
+    Optional<Usuario> findByTokenVerificacionHash(String tokenVerificacionHash);
+
     boolean existsByEmail(String email);
 
     Page<Usuario> findByRol(Rol rol, Pageable pageable);
