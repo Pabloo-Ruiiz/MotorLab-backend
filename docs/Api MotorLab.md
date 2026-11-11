@@ -314,6 +314,10 @@ Respuesta `200` con la orden actualizada. Si la transición no está permitida: 
 | `POST` | `/presupuestos/:id/enviar` | admin | Pasa a `enviado` y avisa al cliente |
 | `POST` | `/presupuestos/:id/autorizar` | cliente | El cliente acepta |
 | `POST` | `/presupuestos/:id/rechazar` | cliente | El cliente rechaza (motivo opcional) |
+| `POST` | `/presupuestos/:id/pago` | cliente | Crea una sesión de pago de Stripe y devuelve `{ "url": ... }` |
+| `POST` | `/presupuestos/:id/pago/efectivo` | cliente | Elige pagar en efectivo al recoger el vehículo (`204`) |
+| `POST` | `/presupuestos/:id/cobro-efectivo` | admin | Marca el presupuesto como cobrado en efectivo (`204`) |
+| `POST` | `/pagos/stripe/webhook` | público (firma de Stripe) | Stripe confirma el cobro |
 
 Editar un presupuesto que ya no está en `borrador` devuelve `409 PRESUPUESTO_NO_EDITABLE`.
 
@@ -373,6 +377,16 @@ Respuesta `201`: la línea creada y los totales ya recalculados por los triggers
 ```
 
 Efectos: presupuesto → `rechazado` (guarda `motivo_rechazo`), orden → `rechazada`, evento y notificación al administrador.
+
+**`POST /presupuestos/:id/pago`** (cliente propietario). Condiciones: presupuesto `autorizado` (si no, `409 TRANSICION_NO_PERMITIDA`) y sin pagar (si no, `409 CONFLICTO`). Crea una sesión de Stripe Checkout en euros por el `total` guardado (el navegador no envía ningún importe) y responde `{ "url": "https://checkout.stripe.com/..." }`. Sin `STRIPE_SECRET_KEY` y `STRIPE_WEBHOOK_SECRET` responde `503 PAGOS_NO_DISPONIBLES`. Solo se admiten claves de prueba (`sk_test_...`).
+
+**`POST /pagos/stripe/webhook`** (público, lo llama Stripe). Verifica la cabecera `Stripe-Signature` sobre el cuerpo sin modificar (`400 FIRMA_NO_VALIDA` si falla). Con `checkout.session.completed` o `checkout.session.async_payment_succeeded` ya cobrado, comprueba importe y moneda, fija `pagado_en`, `metodo_pago = tarjeta` y `estado_pago = pagado_tarjeta`, y avisa al administrador. Es idempotente: Stripe reintenta los avisos y un pago repetido no tiene efecto. Migración: `docs/migracion_pagos_stripe.sql`.
+
+**`POST /presupuestos/:id/pago/efectivo`** (cliente propietario). Mismas condiciones que el pago con tarjeta (`autorizado` y sin pagar). Fija `metodo_pago = efectivo` y `estado_pago = pendiente_efectivo`, avisa al administrador y responde `204`. Repetirlo no tiene efecto. El cliente puede pagar después con tarjeta: el webhook sustituye el efectivo por `pagado_tarjeta`.
+
+**`POST /presupuestos/:id/cobro-efectivo`** (admin). Mismas condiciones. Fija `metodo_pago = efectivo`, `estado_pago = pagado_efectivo` y `pagado_en`, avisa al cliente y responde `204`. Sirve también si el cliente no había elegido método.
+
+`PresupuestoResponse` incluye `metodoPago` (`tarjeta` | `efectivo` | `null`) y `estadoPago` (`pendiente_efectivo` | `pagado_tarjeta` | `pagado_efectivo` | `null`). `PresupuestoResumenResponse` incluye `estadoPago` y `OrdenResumenResponse`, `presupuestoEstadoPago`. Migración: `docs/migracion_metodo_pago.sql`.
 
 ---
 

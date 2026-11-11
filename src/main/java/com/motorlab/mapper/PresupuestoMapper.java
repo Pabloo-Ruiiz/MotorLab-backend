@@ -52,6 +52,9 @@ public class PresupuestoMapper {
                 presupuesto.getMotivoRechazo(),
                 presupuesto.getEnviadoEn(),
                 presupuesto.getRespondidoEn(),
+                presupuesto.getPagadoEn(),
+                presupuesto.getMetodoPago(),
+                presupuesto.getEstadoPago(),
                 avisos);
     }
 }

@@ -146,10 +146,17 @@ CREATE TABLE presupuestos (
   enviado_en             TIMESTAMP,
   respondido_en          TIMESTAMP,
   creado_en              TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  pagado_en              TIMESTAMP,                            -- webhook de Stripe o cobro en el taller
+  stripe_sesion_id       VARCHAR(255),                         -- última sesión de pago de Stripe
+  metodo_pago            VARCHAR(10),                          -- NULL hasta que el cliente elige
+  estado_pago            VARCHAR(20),
   CONSTRAINT uq_presupuestos_orden UNIQUE (orden_id),
   CONSTRAINT fk_presupuestos_orden FOREIGN KEY (orden_id) REFERENCES ordenes_trabajo (id),
   CONSTRAINT ck_presupuestos_estado   CHECK (estado IN ('borrador', 'enviado', 'autorizado', 'rechazado')),
-  CONSTRAINT ck_presupuestos_garantia CHECK (garantia_meses >= 0)
+  CONSTRAINT ck_presupuestos_garantia CHECK (garantia_meses >= 0),
+  CONSTRAINT ck_presupuestos_metodo_pago CHECK (metodo_pago IN ('tarjeta', 'efectivo')),
+  CONSTRAINT ck_presupuestos_estado_pago
+    CHECK (estado_pago IN ('pendiente_efectivo', 'pagado_tarjeta', 'pagado_efectivo'))
 );
 
 CREATE TABLE lineas_presupuesto (
@@ -298,7 +305,8 @@ SELECT
   m.id                AS mecanico_id,
   m.nombre            AS mecanico_nombre,
   p.estado            AS presupuesto_estado,
-  p.total             AS presupuesto_total
+  p.total             AS presupuesto_total,
+  p.estado_pago       AS presupuesto_estado_pago
 FROM ordenes_trabajo o
 JOIN vehiculos v         ON v.id = o.vehiculo_id
 JOIN usuarios  u         ON u.id = v.usuario_id

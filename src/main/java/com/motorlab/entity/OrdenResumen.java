@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import org.hibernate.annotations.Immutable;
 
 import com.motorlab.entity.enums.EstadoOrden;
+import com.motorlab.entity.enums.EstadoPago;
 import com.motorlab.entity.enums.EstadoPresupuesto;
 import com.motorlab.entity.enums.TipoServicio;
 import com.motorlab.entity.enums.Urgencia;
@@ -83,6 +84,10 @@ public class OrdenResumen {
 
     @Column(name = "presupuesto_total", precision = 10, scale = 2)
     private BigDecimal presupuestoTotal;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "presupuesto_estado_pago", length = 20)
+    private EstadoPago presupuestoEstadoPago;
 
     public OrdenResumen() {
     }
@@ -237,5 +242,13 @@ public class OrdenResumen {
 
     public void setPresupuestoTotal(BigDecimal presupuestoTotal) {
         this.presupuestoTotal = presupuestoTotal;
+    }
+
+    public EstadoPago getPresupuestoEstadoPago() {
+        return presupuestoEstadoPago;
+    }
+
+    public void setPresupuestoEstadoPago(EstadoPago presupuestoEstadoPago) {
+        this.presupuestoEstadoPago = presupuestoEstadoPago;
     }
 }

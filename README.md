@@ -48,6 +48,10 @@ La aplicación necesita estas variables:
 | `MAIL_PASS` | Contraseña o clave SMTP de la cuenta. |
 | `MAIL_FROM` | Dirección remitente de los correos (por defecto, `MAIL_USER`). |
 | `MAIL_ENLACE_EN_LOG` | Si es `true`, el enlace de verificación también se escribe en el log. |
+| `STRIPE_SECRET_KEY` | Clave secreta de Stripe en modo prueba (`sk_test_...`). Las claves reales (`sk_live_...`) se rechazan. |
+| `STRIPE_WEBHOOK_SECRET` | Secreto de firma del webhook de Stripe (`whsec_...`). |
+
+Sin `STRIPE_SECRET_KEY` y `STRIPE_WEBHOOK_SECRET`, el pago en línea queda desactivado y `POST /presupuestos/:id/pago` responde `503 PAGOS_NO_DISPONIBLES`.
 
 ### Git Bash
 
@@ -55,15 +59,17 @@ Define las variables en la terminal antes de arrancar la aplicación. Solo estar
 
 ```bash
 export DB_USER=motorlab_usr
-export DB_PASS=motorlab_usr
+export DB_PASS=
 export JWT_SECRET="$(openssl rand -base64 48)"
 export SPRING_PROFILES_ACTIVE=local
 export DEV_PASSWORD_SEMILLA="$(openssl rand -base64 24)"
 export MAIL_HOST=smtp-relay.brevo.com
 export MAIL_USER=pablo.ruiz.gandia21@gmail.com
-export MAIL_PASS="cwew xlzx tgik fsav"
+export MAIL_PASS=""
 export MAIL_FROM=pablo.ruiz.gandia21@gmail.com
 export MAIL_ENLACE_EN_LOG=true
+export STRIPE_SECRET_KEY=""
+export STRIPE_WEBHOOK_SECRET=""
 ```
 
 Después, con PostgreSQL iniciado y la base de datos `motorlabdb` creada mediante
@@ -89,6 +95,8 @@ $env:MAIL_USER="<usuario-smtp>"
 $env:MAIL_PASS="<contraseña-smtp>"
 $env:MAIL_FROM="<correo-remitente>"
 $env:MAIL_ENLACE_EN_LOG="true"
+$env:STRIPE_SECRET_KEY="<clave-secreta-sk_test>"
+$env:STRIPE_WEBHOOK_SECRET="<secreto-webhook-whsec>"
 ```
 
 Con PostgreSQL iniciado y la base de datos `motorlabdb` preparada, ejecuta:
@@ -127,12 +135,24 @@ Para arrancar desde el depurador de VS Code, crea `.vscode/launch.json` (este ar
         "MAIL_USER": "usuario-smtp",
         "MAIL_PASS": "contraseña-smtp",
         "MAIL_FROM": "correo-remitente",
-        "MAIL_ENLACE_EN_LOG": "true"
+        "MAIL_ENLACE_EN_LOG": "true",
+        "STRIPE_SECRET_KEY": "clave-secreta-sk_test",
+        "STRIPE_WEBHOOK_SECRET": "secreto-webhook-whsec"
       }
     }
   ]
 }
 ```
+
+### Pagos con Stripe en local
+
+La clave `sk_test_...` se obtiene en el panel de Stripe (modo prueba, *Developers → API keys*). Para recibir los avisos del webhook en local, usa la [Stripe CLI](https://docs.stripe.com/stripe-cli):
+
+```bash
+stripe listen --forward-to localhost:8080/api/v1/pagos/stripe/webhook
+```
+
+El comando muestra un secreto `whsec_...`: úsalo como `STRIPE_WEBHOOK_SECRET` y reinicia la aplicación. Si la base de datos se creó antes de añadir los pagos, aplica la migración [docs/migracion_pagos_stripe.sql](docs/migracion_pagos_stripe.sql).
 
 ## Comprobar el arranque
 
@@ -165,6 +185,8 @@ La documentación interactiva está disponible en:
 <http://localhost:8080/swagger-ui.html>
 
 La especificación OpenAPI se puede consultar en <http://localhost:8080/v3/api-docs>.
+
+Ambas rutas solo están activas con el perfil `local` (`SPRING_PROFILES_ACTIVE=local`). Sin ese perfil, por ejemplo en producción, quedan desactivadas.
 
 ## Usuarios de ejemplo
 
