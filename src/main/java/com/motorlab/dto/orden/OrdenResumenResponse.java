@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import com.motorlab.entity.enums.EstadoOrden;
+import com.motorlab.entity.enums.EstadoPago;
 import com.motorlab.entity.enums.EstadoPresupuesto;
 import com.motorlab.entity.enums.TipoServicio;
 import com.motorlab.entity.enums.Urgencia;
@@ -23,5 +24,6 @@ public record OrdenResumenResponse(
         LocalDateTime fechaEntrada,
         LocalDateTime fechaEstimada,
         EstadoPresupuesto presupuestoEstado,
-        BigDecimal presupuestoTotal) {
+        BigDecimal presupuestoTotal,
+        EstadoPago presupuestoEstadoPago) {
 }

@@ -4,7 +4,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.motorlab.entity.enums.EstadoPago;
 import com.motorlab.entity.enums.EstadoPresupuesto;
+import com.motorlab.entity.enums.MetodoPago;
 
 public record PresupuestoResponse(
         Integer id,
@@ -20,5 +22,8 @@ public record PresupuestoResponse(
         String motivoRechazo,
         LocalDateTime enviadoEn,
         LocalDateTime respondidoEn,
+        LocalDateTime pagadoEn,
+        MetodoPago metodoPago,
+        EstadoPago estadoPago,
         List<AvisoStockResponse> avisosStock) {
 }

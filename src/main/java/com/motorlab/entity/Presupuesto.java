@@ -5,7 +5,9 @@ import java.time.LocalDateTime;
 
 import org.hibernate.annotations.DynamicUpdate;
 
+import com.motorlab.entity.enums.EstadoPago;
 import com.motorlab.entity.enums.EstadoPresupuesto;
+import com.motorlab.entity.enums.MetodoPago;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -66,7 +68,55 @@ public class Presupuesto {
     @Column(name = "creado_en", nullable = false, insertable = false, updatable = false)
     private LocalDateTime creadoEn;
 
+    // Lo fija solo el webhook de Stripe, nunca la vuelta del navegador
+    @Column(name = "pagado_en")
+    private LocalDateTime pagadoEn;
+
+    @Column(name = "stripe_sesion_id", length = 255)
+    private String stripeSesionId;
+
+    // Sin valor mientras el cliente no elige cómo pagar
+    @Enumerated(EnumType.STRING)
+    @Column(name = "metodo_pago", length = 10)
+    private MetodoPago metodoPago;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estado_pago", length = 20)
+    private EstadoPago estadoPago;
+
     public Presupuesto() {
+    }
+
+    public LocalDateTime getPagadoEn() {
+        return pagadoEn;
+    }
+
+    public void setPagadoEn(LocalDateTime pagadoEn) {
+        this.pagadoEn = pagadoEn;
+    }
+
+    public MetodoPago getMetodoPago() {
+        return metodoPago;
+    }
+
+    public void setMetodoPago(MetodoPago metodoPago) {
+        this.metodoPago = metodoPago;
+    }
+
+    public EstadoPago getEstadoPago() {
+        return estadoPago;
+    }
+
+    public void setEstadoPago(EstadoPago estadoPago) {
+        this.estadoPago = estadoPago;
+    }
+
+    public String getStripeSesionId() {
+        return stripeSesionId;
+    }
+
+    public void setStripeSesionId(String stripeSesionId) {
+        this.stripeSesionId = stripeSesionId;
     }
 
     public Integer getId() {

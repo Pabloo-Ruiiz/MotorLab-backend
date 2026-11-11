@@ -61,7 +61,9 @@ public class SecurityConfig {
                                 "/api/v1/auth/registro",
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/verificar-email",
-                                "/api/v1/auth/reenviar-verificacion").permitAll()
+                                "/api/v1/auth/reenviar-verificacion",
+                                // Lo llama Stripe: se autentica con la firma del aviso
+                                "/api/v1/pagos/stripe/webhook").permitAll()
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",

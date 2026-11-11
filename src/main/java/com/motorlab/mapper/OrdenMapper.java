@@ -41,7 +41,8 @@ public class OrdenMapper {
                 orden.getFechaEntrada(),
                 orden.getFechaEstimada(),
                 orden.getPresupuestoEstado(),
-                orden.getPresupuestoTotal());
+                orden.getPresupuestoTotal(),
+                orden.getPresupuestoEstadoPago());
     }
 
     public OrdenDetalleResponse aDetalleResponse(OrdenTrabajo orden, Presupuesto presupuesto) {
@@ -64,7 +65,8 @@ public class OrdenMapper {
                 usuarioMapper.aResumen(orden.getVehiculo().getUsuario()),
                 orden.getMecanico() == null ? null : usuarioMapper.aResumen(orden.getMecanico()),
                 presupuesto == null ? null : new PresupuestoResumenResponse(
-                        presupuesto.getId(), presupuesto.getEstado(), presupuesto.getTotal()));
+                        presupuesto.getId(), presupuesto.getEstado(), presupuesto.getTotal(),
+                        presupuesto.getEstadoPago()));
     }
 
     public SeguimientoResponse aSeguimientoResponse(
