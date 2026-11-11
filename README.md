@@ -43,6 +43,11 @@ La aplicación necesita estas variables:
 | `JWT_SECRET` | Secreto JWT largo y aleatorio (más de 32 caracteres). |
 | `SPRING_PROFILES_ACTIVE` | Perfil de Spring; usa `local` para inicializar la contraseña de los usuarios de ejemplo. |
 | `DEV_PASSWORD_SEMILLA` | Contraseña temporal definida solo en desarrollo para los usuarios de ejemplo. |
+| `MAIL_HOST` | Servidor SMTP (por ejemplo `smtp-relay.brevo.com`). Si no se define, no se envía ningún correo. |
+| `MAIL_USER` | Usuario de la cuenta SMTP. |
+| `MAIL_PASS` | Contraseña o clave SMTP de la cuenta. |
+| `MAIL_FROM` | Dirección remitente de los correos (por defecto, `MAIL_USER`). |
+| `MAIL_ENLACE_EN_LOG` | Si es `true`, el enlace de verificación también se escribe en el log. |
 
 ### Git Bash
 
@@ -50,10 +55,15 @@ Define las variables en la terminal antes de arrancar la aplicación. Solo estar
 
 ```bash
 export DB_USER=motorlab_usr
-export DB_PASS="<contraseña-definida-para-motorlab_usr>"
+export DB_PASS=motorlab_usr
 export JWT_SECRET="$(openssl rand -base64 48)"
 export SPRING_PROFILES_ACTIVE=local
 export DEV_PASSWORD_SEMILLA="$(openssl rand -base64 24)"
+export MAIL_HOST=smtp-relay.brevo.com
+export MAIL_USER=pablo.ruiz.gandia21@gmail.com
+export MAIL_PASS="cwew xlzx tgik fsav"
+export MAIL_FROM=pablo.ruiz.gandia21@gmail.com
+export MAIL_ENLACE_EN_LOG=true
 ```
 
 Después, con PostgreSQL iniciado y la base de datos `motorlabdb` creada mediante
@@ -74,6 +84,11 @@ $env:DB_PASS="<contraseña-definida-para-motorlab_usr>"
 $env:JWT_SECRET="<secreto-largo-y-aleatorio-de-al-menos-32-caracteres>"
 $env:SPRING_PROFILES_ACTIVE="local"
 $env:DEV_PASSWORD_SEMILLA="<contraseña-temporal-para-los-usuarios-de-ejemplo>"
+$env:MAIL_HOST="smtp-relay.brevo.com"
+$env:MAIL_USER="<usuario-smtp>"
+$env:MAIL_PASS="<contraseña-smtp>"
+$env:MAIL_FROM="<correo-remitente>"
+$env:MAIL_ENLACE_EN_LOG="true"
 ```
 
 Con PostgreSQL iniciado y la base de datos `motorlabdb` preparada, ejecuta:
@@ -107,7 +122,12 @@ Para arrancar desde el depurador de VS Code, crea `.vscode/launch.json` (este ar
         "DB_PASS": "contraseña-definida-para-motorlab_usr",
         "JWT_SECRET": "sustituye-este-valor-por-un-secreto-largo-y-aleatorio",
         "SPRING_PROFILES_ACTIVE": "local",
-        "DEV_PASSWORD_SEMILLA": "sustituye-este-valor-por-una-contraseña-temporal"
+        "DEV_PASSWORD_SEMILLA": "sustituye-este-valor-por-una-contraseña-temporal",
+        "MAIL_HOST": "smtp-relay.brevo.com",
+        "MAIL_USER": "usuario-smtp",
+        "MAIL_PASS": "contraseña-smtp",
+        "MAIL_FROM": "correo-remitente",
+        "MAIL_ENLACE_EN_LOG": "true"
       }
     }
   ]

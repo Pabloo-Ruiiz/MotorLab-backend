@@ -35,6 +35,7 @@ build/
 
 ### Local configuration ###
 src/main/resources/application-local.properties
+.env
 
 ### Frontend compilat ###
 src/main/resources/static/
