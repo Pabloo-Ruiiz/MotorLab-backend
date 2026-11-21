@@ -318,6 +318,8 @@ Respuesta `200` con la orden actualizada. Si la transición no está permitida: 
 | `POST` | `/presupuestos/:id/pago/efectivo` | cliente | Elige pagar en efectivo al recoger el vehículo (`204`) |
 | `POST` | `/presupuestos/:id/cobro-efectivo` | admin | Marca el presupuesto como cobrado en efectivo (`204`) |
 | `POST` | `/pagos/stripe/webhook` | público (firma de Stripe) | Stripe confirma el cobro |
+| `GET` | `/ordenes/:id/presupuesto-definitivo` | cliente (suya), mecánico (asignada), admin | Presupuesto definitivo de una reparación finalizada |
+| `GET` | `/ordenes/:id/presupuesto-definitivo/pdf` | cliente (suya), mecánico (asignada), admin | El mismo documento en PDF |
 
 Editar un presupuesto que ya no está en `borrador` devuelve `409 PRESUPUESTO_NO_EDITABLE`.
 
@@ -378,13 +380,15 @@ Respuesta `201`: la línea creada y los totales ya recalculados por los triggers
 
 Efectos: presupuesto → `rechazado` (guarda `motivo_rechazo`), orden → `rechazada`, evento y notificación al administrador.
 
-**`POST /presupuestos/:id/pago`** (cliente propietario). Condiciones: presupuesto `autorizado` (si no, `409 TRANSICION_NO_PERMITIDA`) y sin pagar (si no, `409 CONFLICTO`). Crea una sesión de Stripe Checkout en euros por el `total` guardado (el navegador no envía ningún importe) y responde `{ "url": "https://checkout.stripe.com/..." }`. Sin `STRIPE_SECRET_KEY` y `STRIPE_WEBHOOK_SECRET` responde `503 PAGOS_NO_DISPONIBLES`. Solo se admiten claves de prueba (`sk_test_...`).
+**`POST /presupuestos/:id/pago`** (cliente propietario). Condiciones: presupuesto `autorizado` y orden en `listo` o `entregado`, es decir, se paga al recoger el vehículo y no al autorizar (si no, `409 TRANSICION_NO_PERMITIDA`), y sin pagar (si no, `409 CONFLICTO`). Crea una sesión de Stripe Checkout en euros por el `total` guardado (el navegador no envía ningún importe) y responde `{ "url": "https://checkout.stripe.com/..." }`. Sin `STRIPE_SECRET_KEY` y `STRIPE_WEBHOOK_SECRET` responde `503 PAGOS_NO_DISPONIBLES`. Solo se admiten claves de prueba (`sk_test_...`).
 
 **`POST /pagos/stripe/webhook`** (público, lo llama Stripe). Verifica la cabecera `Stripe-Signature` sobre el cuerpo sin modificar (`400 FIRMA_NO_VALIDA` si falla). Con `checkout.session.completed` o `checkout.session.async_payment_succeeded` ya cobrado, comprueba importe y moneda, fija `pagado_en`, `metodo_pago = tarjeta` y `estado_pago = pagado_tarjeta`, y avisa al administrador. Es idempotente: Stripe reintenta los avisos y un pago repetido no tiene efecto. Migración: `docs/migracion_pagos_stripe.sql`.
 
-**`POST /presupuestos/:id/pago/efectivo`** (cliente propietario). Mismas condiciones que el pago con tarjeta (`autorizado` y sin pagar). Fija `metodo_pago = efectivo` y `estado_pago = pendiente_efectivo`, avisa al administrador y responde `204`. Repetirlo no tiene efecto. El cliente puede pagar después con tarjeta: el webhook sustituye el efectivo por `pagado_tarjeta`.
+**`POST /presupuestos/:id/pago/efectivo`** (cliente propietario). Mismas condiciones que el pago con tarjeta (`autorizado`, orden en `listo` o `entregado` y sin pagar). El cobro en efectivo del taller (`/cobro-efectivo`) también exige la reparación terminada. Fija `metodo_pago = efectivo` y `estado_pago = pendiente_efectivo`, avisa al administrador y responde `204`. Repetirlo no tiene efecto. El cliente puede pagar después con tarjeta: el webhook sustituye el efectivo por `pagado_tarjeta`.
 
 **`POST /presupuestos/:id/cobro-efectivo`** (admin). Mismas condiciones. Fija `metodo_pago = efectivo`, `estado_pago = pagado_efectivo` y `pagado_en`, avisa al cliente y responde `204`. Sirve también si el cliente no había elegido método.
+
+**Presupuesto definitivo.** Al pasar una orden a `listo` (reparación finalizada), `OrdenEstadoService` emite automáticamente el presupuesto definitivo: copia las líneas del presupuesto autorizado (concepto, referencia, cantidad, precio e importe), los subtotales de mano de obra y piezas, la base imponible, el IVA y el total, y los datos del cliente y del vehículo. Se guarda en `presupuestos_definitivos` y `lineas_presupuesto_definitivo`, con una restricción `UNIQUE (orden_id)`: hay uno por orden y no se recalcula aunque cambien después los precios del catálogo. Antes de `listo` no existe y la consulta responde `404` («El presupuesto definitivo estará disponible cuando finalice la reparación»). Las órdenes que ya estaban en `listo` o `entregado` antes de existir esta función lo reciben la primera vez que se consulta. Número: `PD-<año>-<id con 5 cifras>`. Los datos del taller del pie salen de `TALLER_NOMBRE` (por defecto «Taller MotorLab»), `TALLER_DIRECCION`, `TALLER_TELEFONO`, `TALLER_EMAIL` y `TALLER_CIF`; los vacíos no se muestran. Migración: `docs/migracion_presupuesto_definitivo.sql`.
 
 `PresupuestoResponse` incluye `metodoPago` (`tarjeta` | `efectivo` | `null`) y `estadoPago` (`pendiente_efectivo` | `pagado_tarjeta` | `pagado_efectivo` | `null`). `PresupuestoResumenResponse` incluye `estadoPago` y `OrdenResumenResponse`, `presupuestoEstadoPago`. Migración: `docs/migracion_metodo_pago.sql`.
 

@@ -60,12 +60,7 @@ public class PagoService {
             throw new PagosNoDisponiblesException();
         }
         Presupuesto presupuesto = obtenerDelCliente(presupuestoId);
-        if (presupuesto.getPagadoEn() != null) {
-            throw new ConflictoException("Este presupuesto ya está pagado");
-        }
-        if (presupuesto.getEstado() != EstadoPresupuesto.autorizado) {
-            throw new TransicionNoPermitidaException("Solo se puede pagar un presupuesto autorizado");
-        }
+        comprobarPendienteDePago(presupuesto);
 
         // El importe sale siempre del presupuesto guardado, nunca de lo que envía el navegador
         long importe = enCentimos(presupuesto.getTotal());
@@ -124,7 +119,7 @@ public class PagoService {
                 "El cliente ha pagado el presupuesto con tarjeta · " + importe(presupuesto) + " €");
     }
 
-    // El cliente se compromete a pagar en el taller al recoger el vehículo. Puede cambiar
+    // Con el vehículo listo, el cliente elige pagar en el taller al recogerlo. Puede cambiar
     // después de opinión y pagar con tarjeta: el pago con Stripe sigue disponible.
     @Transactional
     public void elegirEfectivo(Integer presupuestoId) {
@@ -168,6 +163,11 @@ public class PagoService {
         }
         if (presupuesto.getEstado() != EstadoPresupuesto.autorizado) {
             throw new TransicionNoPermitidaException("Solo se puede pagar un presupuesto autorizado");
+        }
+        // Se paga al recoger el vehículo, no al autorizar el presupuesto
+        if (!PresupuestoDefinitivoService.REPARACION_FINALIZADA.contains(presupuesto.getOrden().getEstado())) {
+            throw new TransicionNoPermitidaException(
+                    "El pago estará disponible cuando el vehículo esté listo para recoger");
         }
     }
 

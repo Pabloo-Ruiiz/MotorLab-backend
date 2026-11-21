@@ -26,6 +26,7 @@ import com.motorlab.entity.OrdenTrabajo;
 import com.motorlab.entity.Presupuesto;
 import com.motorlab.entity.Usuario;
 import com.motorlab.entity.Vehiculo;
+import com.motorlab.entity.enums.EstadoOrden;
 import com.motorlab.entity.enums.EstadoPago;
 import com.motorlab.entity.enums.EstadoPresupuesto;
 import com.motorlab.entity.enums.MetodoPago;
@@ -63,6 +64,7 @@ class PagoServiceTest {
         OrdenTrabajo orden = new OrdenTrabajo();
         orden.setId(9);
         orden.setVehiculo(vehiculo);
+        orden.setEstado(EstadoOrden.listo);
 
         presupuesto = new Presupuesto();
         presupuesto.setId(5);
@@ -101,6 +103,32 @@ class PagoServiceTest {
 
         assertThatThrownBy(() -> servicio.iniciar(5)).isInstanceOf(TransicionNoPermitidaException.class);
         verify(pasarela, never()).crearSesion(any());
+    }
+
+    @Test
+    void conElPresupuestoAutorizadoPeroElVehiculoSinTerminarNoSePuedePagar() {
+        for (EstadoOrden estado : new EstadoOrden[] {
+                EstadoOrden.presupuesto_autorizado, EstadoOrden.recibido, EstadoOrden.arreglando }) {
+            presupuesto.getOrden().setEstado(estado);
+
+            assertThatThrownBy(() -> servicio.iniciar(5)).isInstanceOf(TransicionNoPermitidaException.class);
+            assertThatThrownBy(() -> servicio.elegirEfectivo(5)).isInstanceOf(TransicionNoPermitidaException.class);
+            autenticar(usuario(1, Rol.admin));
+            assertThatThrownBy(() -> servicio.cobrarEfectivo(5)).isInstanceOf(TransicionNoPermitidaException.class);
+            autenticar(cliente);
+        }
+        verify(pasarela, never()).crearSesion(any());
+        assertThat(presupuesto.getEstadoPago()).isNull();
+        assertThat(presupuesto.getPagadoEn()).isNull();
+    }
+
+    @Test
+    void conElVehiculoEntregadoSinPagarAunSePuedePagar() {
+        presupuesto.getOrden().setEstado(EstadoOrden.entregado);
+
+        servicio.iniciar(5);
+
+        verify(pasarela).crearSesion(any());
     }
 
     @Test

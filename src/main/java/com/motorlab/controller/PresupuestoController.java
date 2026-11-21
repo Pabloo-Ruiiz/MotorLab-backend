@@ -14,12 +14,18 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+
 import com.motorlab.dto.presupuesto.LineaCreadaResponse;
 import com.motorlab.dto.presupuesto.LineaRequest;
+import com.motorlab.dto.presupuesto.PresupuestoDefinitivoResponse;
 import com.motorlab.dto.presupuesto.PresupuestoResponse;
 import com.motorlab.dto.presupuesto.PresupuestoUpdateRequest;
 import com.motorlab.dto.presupuesto.RechazoRequest;
 import com.motorlab.dto.presupuesto.TotalesResponse;
+import com.motorlab.service.PresupuestoDefinitivoService;
 import com.motorlab.service.PresupuestoService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -36,9 +42,44 @@ import jakarta.validation.constraints.Positive;
 public class PresupuestoController {
 
     private final PresupuestoService presupuestoService;
+    private final PresupuestoDefinitivoService presupuestoDefinitivoService;
 
-    public PresupuestoController(PresupuestoService presupuestoService) {
+    public PresupuestoController(
+            PresupuestoService presupuestoService, PresupuestoDefinitivoService presupuestoDefinitivoService) {
         this.presupuestoService = presupuestoService;
+        this.presupuestoDefinitivoService = presupuestoDefinitivoService;
+    }
+
+    @GetMapping("/ordenes/{ordenId}/presupuesto-definitivo")
+    @PreAuthorize("hasAnyRole('CLIENTE','MECANICO','ADMIN')")
+    @Operation(summary = "Consultar el presupuesto definitivo de una reparación finalizada",
+            description = "Existe desde que la orden pasa a 'listo'. Recoge los trabajos, las piezas y los importes "
+                    + "de la reparación y no cambia aunque varíen después los precios del catálogo")
+    @ApiResponses({
+            @ApiResponse(responseCode = "401", description = "Autenticación requerida"),
+            @ApiResponse(responseCode = "403", description = "Rol no autorizado"),
+            @ApiResponse(responseCode = "404", description = "Orden no encontrada o reparación sin finalizar")
+    })
+    public PresupuestoDefinitivoResponse obtenerDefinitivo(@PathVariable @Positive Integer ordenId) {
+        return presupuestoDefinitivoService.consultar(ordenId);
+    }
+
+    @GetMapping(path = "/ordenes/{ordenId}/presupuesto-definitivo/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+    @PreAuthorize("hasAnyRole('CLIENTE','MECANICO','ADMIN')")
+    @Operation(summary = "Descargar en PDF el presupuesto definitivo de una reparación finalizada")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Documento PDF"),
+            @ApiResponse(responseCode = "401", description = "Autenticación requerida"),
+            @ApiResponse(responseCode = "403", description = "Rol no autorizado"),
+            @ApiResponse(responseCode = "404", description = "Orden no encontrada o reparación sin finalizar")
+    })
+    public ResponseEntity<byte[]> descargarDefinitivo(@PathVariable @Positive Integer ordenId) {
+        PresupuestoDefinitivoService.DocumentoPdf documento = presupuestoDefinitivoService.descargar(ordenId);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment().filename(documento.nombreArchivo()).build().toString())
+                .body(documento.contenido());
     }
 
     @PostMapping("/ordenes/{ordenId}/presupuesto")
