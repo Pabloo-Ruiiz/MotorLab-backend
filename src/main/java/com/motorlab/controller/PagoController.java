@@ -52,6 +52,22 @@ public class PagoController {
         return pagoService.iniciar(id);
     }
 
+    @PostMapping("/presupuestos/{id}/pago/verificacion")
+    @PreAuthorize("hasRole('CLIENTE')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Comprobar con Stripe si el pago con tarjeta se ha completado",
+            description = "Se llama al volver de Stripe con ?pago=ok. Si Stripe confirma el cobro, el presupuesto "
+                    + "queda pagado con tarjeta sin esperar al webhook. Repetirlo no tiene efecto")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Comprobación hecha"),
+            @ApiResponse(responseCode = "401", description = "Autenticación requerida"),
+            @ApiResponse(responseCode = "403", description = "Solo clientes"),
+            @ApiResponse(responseCode = "404", description = "Presupuesto no encontrado")
+    })
+    public void verificar(@PathVariable @Positive Integer id) {
+        pagoService.verificar(id);
+    }
+
     @PostMapping("/presupuestos/{id}/pago/efectivo")
     @PreAuthorize("hasRole('CLIENTE')")
     @ResponseStatus(HttpStatus.NO_CONTENT)

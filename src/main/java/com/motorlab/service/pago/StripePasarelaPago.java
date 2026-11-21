@@ -102,7 +102,28 @@ public class StripePasarelaPago implements PasarelaPago {
         if (!EVENTOS_DE_PAGO.contains(evento.getType())) {
             return Optional.empty();
         }
-        if (!(objetoDe(evento) instanceof Session sesion) || !"paid".equals(sesion.getPaymentStatus())) {
+        if (!(objetoDe(evento) instanceof Session sesion)) {
+            return Optional.empty();
+        }
+        return pagoDe(sesion);
+    }
+
+    // Por si el webhook no llega (p. ej. en local sin «stripe listen»): se pregunta a Stripe directamente
+    @Override
+    public Optional<PagoCompletado> consultarSesion(String sesionId) {
+        if (cliente == null || sesionId == null || sesionId.isBlank()) {
+            return Optional.empty();
+        }
+        try {
+            return pagoDe(cliente.checkout().sessions().retrieve(sesionId));
+        } catch (StripeException excepcion) {
+            log.warn("No se ha podido consultar la sesión de pago {} en Stripe", sesionId, excepcion);
+            return Optional.empty();
+        }
+    }
+
+    private Optional<PagoCompletado> pagoDe(Session sesion) {
+        if (!"paid".equals(sesion.getPaymentStatus())) {
             return Optional.empty();
         }
 

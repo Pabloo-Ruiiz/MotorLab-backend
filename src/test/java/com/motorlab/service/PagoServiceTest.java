@@ -250,6 +250,48 @@ class PagoServiceTest {
         verify(notificaciones, never()).notificarAdmins(any(), any(), anyString());
     }
 
+    @Test
+    void verificarMarcaPagadoSiStripeConfirmaLaSesion() {
+        presupuesto.setStripeSesionId("cs_test_1");
+        when(pasarela.consultarSesion("cs_test_1"))
+                .thenReturn(Optional.of(new PagoCompletado("cs_test_1", 5, 27213, "eur")));
+
+        servicio.verificar(5);
+
+        assertThat(presupuesto.getPagadoEn()).isNotNull();
+        assertThat(presupuesto.getEstadoPago()).isEqualTo(EstadoPago.pagado_tarjeta);
+        verify(notificaciones).notificarAdmins(any(), any(), anyString());
+    }
+
+    @Test
+    void verificarNoHaceNadaSiLaSesionNoEstaPagada() {
+        presupuesto.setStripeSesionId("cs_test_1");
+        when(pasarela.consultarSesion("cs_test_1")).thenReturn(Optional.empty());
+
+        servicio.verificar(5);
+
+        assertThat(presupuesto.getPagadoEn()).isNull();
+    }
+
+    @Test
+    void verificarIgnoraUnaSesionDeOtroPresupuesto() {
+        presupuesto.setStripeSesionId("cs_test_1");
+        when(pasarela.consultarSesion("cs_test_1"))
+                .thenReturn(Optional.of(new PagoCompletado("cs_test_1", 6, 27213, "eur")));
+
+        servicio.verificar(5);
+
+        assertThat(presupuesto.getPagadoEn()).isNull();
+    }
+
+    @Test
+    void otroClienteNoPuedeVerificarElPago() {
+        autenticar(usuario(8, Rol.cliente));
+
+        assertThatThrownBy(() -> servicio.verificar(5)).isInstanceOf(RecursoNoEncontradoException.class);
+        verify(pasarela, never()).consultarSesion(any());
+    }
+
     private static Usuario usuario(int id, Rol rol) {
         Usuario usuario = new Usuario();
         usuario.setId(id);

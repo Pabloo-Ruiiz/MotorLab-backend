@@ -17,6 +17,12 @@ public interface PasarelaPago {
      */
     Optional<PagoCompletado> leerAviso(String cuerpo, String firma);
 
+    /**
+     * Pregunta a la pasarela por una sesión de pago ya creada.
+     * Vacío si la sesión aún no está pagada o no se puede consultar.
+     */
+    Optional<PagoCompletado> consultarSesion(String sesionId);
+
     record NuevaSesionPago(
             Integer presupuestoId,
             long importeCentimos,
