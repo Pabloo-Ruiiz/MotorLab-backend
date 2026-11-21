@@ -97,6 +97,23 @@ public class PagoService {
             log.warn("Pago {} de un presupuesto inexistente ({})", pago.sesionId(), pago.presupuestoId());
             return;
         }
+        registrarPagoConTarjeta(presupuesto, pago);
+    }
+
+    // Al volver de Stripe con ?pago=ok el cliente pide comprobar el pago sin esperar al webhook.
+    // No se fía del navegador: consulta a Stripe la sesión guardada en el presupuesto.
+    @Transactional
+    public void verificar(Integer presupuestoId) {
+        Presupuesto presupuesto = obtenerDelCliente(presupuestoId);
+        if (presupuesto.getPagadoEn() != null || presupuesto.getStripeSesionId() == null) {
+            return;
+        }
+        pasarela.consultarSesion(presupuesto.getStripeSesionId())
+                .filter(pago -> presupuesto.getId().equals(pago.presupuestoId()))
+                .ifPresent(pago -> registrarPagoConTarjeta(presupuesto, pago));
+    }
+
+    private void registrarPagoConTarjeta(Presupuesto presupuesto, PagoCompletado pago) {
         if (presupuesto.getPagadoEn() != null) {
             return;
         }

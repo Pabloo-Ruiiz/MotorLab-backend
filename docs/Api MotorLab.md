@@ -315,6 +315,7 @@ Respuesta `200` con la orden actualizada. Si la transición no está permitida: 
 | `POST` | `/presupuestos/:id/autorizar` | cliente | El cliente acepta |
 | `POST` | `/presupuestos/:id/rechazar` | cliente | El cliente rechaza (motivo opcional) |
 | `POST` | `/presupuestos/:id/pago` | cliente | Crea una sesión de pago de Stripe y devuelve `{ "url": ... }` |
+| `POST` | `/presupuestos/:id/pago/verificacion` | cliente | Al volver de Stripe con `?pago=ok`, consulta la sesión en Stripe y marca el presupuesto `pagado_tarjeta` si ya está cobrado (`204`) |
 | `POST` | `/presupuestos/:id/pago/efectivo` | cliente | Elige pagar en efectivo al recoger el vehículo (`204`) |
 | `POST` | `/presupuestos/:id/cobro-efectivo` | admin | Marca el presupuesto como cobrado en efectivo (`204`) |
 | `POST` | `/pagos/stripe/webhook` | público (firma de Stripe) | Stripe confirma el cobro |
