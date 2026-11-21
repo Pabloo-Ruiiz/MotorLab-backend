@@ -25,6 +25,7 @@ public class OrdenEstadoService {
     private final EventoSeguimientoRepository eventoSeguimientoRepository;
     private final PresupuestoRepository presupuestoRepository;
     private final PiezaService piezaService;
+    private final PresupuestoDefinitivoService presupuestoDefinitivoService;
 
     public OrdenEstadoService(
             TransicionesEstado transicionesEstado,
@@ -33,7 +34,8 @@ public class OrdenEstadoService {
             NotificacionService notificacionService,
             EventoSeguimientoRepository eventoSeguimientoRepository,
             PresupuestoRepository presupuestoRepository,
-            PiezaService piezaService) {
+            PiezaService piezaService,
+            PresupuestoDefinitivoService presupuestoDefinitivoService) {
         this.transicionesEstado = transicionesEstado;
         this.ordenTrabajoRepository = ordenTrabajoRepository;
         this.seguimientoService = seguimientoService;
@@ -41,6 +43,7 @@ public class OrdenEstadoService {
         this.eventoSeguimientoRepository = eventoSeguimientoRepository;
         this.presupuestoRepository = presupuestoRepository;
         this.piezaService = piezaService;
+        this.presupuestoDefinitivoService = presupuestoDefinitivoService;
     }
 
     @Transactional
@@ -68,11 +71,16 @@ public class OrdenEstadoService {
         OrdenTrabajo ordenGuardada = ordenTrabajoRepository.save(orden);
         seguimientoService.registrar(ordenGuardada, nuevo, descripcion, autor);
 
+        // La reparación ha finalizado: se emite el presupuesto definitivo con lo realizado
+        if (nuevo == EstadoOrden.listo) {
+            presupuestoDefinitivoService.generar(ordenGuardada);
+        }
+
         TipoNotificacion tipo = nuevo == EstadoOrden.listo
                 ? TipoNotificacion.vehiculo_listo
                 : TipoNotificacion.cambio_estado;
         String mensaje = nuevo == EstadoOrden.listo
-                ? "Tu vehículo está listo para recoger"
+                ? "Tu vehículo está listo para recoger. Ya puedes consultar el presupuesto definitivo y elegir cómo pagar"
                 : "La orden ha cambiado al estado " + nuevo;
         notificacionService.notificarCliente(ordenGuardada, tipo, mensaje);
         return ordenGuardada;
